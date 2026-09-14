@@ -1,0 +1,23 @@
+{
+  "@@locale": "ko",
+  "appTitle": "메뉴스캔",
+  "settings": "설정",
+  "language": "언어",
+  "theme": "테마",
+  "help": "도움말 및 지원",
+  "about": "앱 정보",
+  "sendFeedback": "피드백 보내기",
+  "chooseLanguage": "언어 선택",
+  "availableLanguages": "사용 가능한 언어",
+  "chooseLook": "테마 선택",
+  "systemDefault": "시스템 기본값",
+  "light": "라이트",
+  "dark": "다크",
+  "privacyPolicy": "개인정보 처리방침",
+  "termsOfService": "서비스 약관",
+  "contactSupport": "고객 지원",
+  "submit": "제출",
+  "cancel": "취소",
+  "rateUs": "앱 평가하기",
+  "share": "공유"
+}

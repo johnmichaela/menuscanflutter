@@ -1,0 +1,77 @@
+name: ballon
+description: "Balloon - Restaurant menu & ordering app."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.12.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  provider: ^6.1.1
+  http: ^1.2.1
+  shared_preferences: ^2.5.3
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^7.4.0
+  google_fonts: ^8.2.1
+  url_launcher: ^6.3.0
+  geolocator: ^13.0.1
+  share_plus: ^10.1.0
+  intl: ^0.20.2
+  equatable: ^2.1.0
+  internet_connection_checker: ^3.0.1
+  dartz: ^0.10.1
+  get_it: ^9.2.1
+  flutter_bloc: ^9.1.1
+  timeago: ^3.7.1
+  readmore: ^3.0.0
+  image_picker: ^1.2.3
+  pull_to_refresh: ^2.0.0
+  font_awesome_flutter: ^11.0.0
+  google_sign_in: ^6.2.1
+  # firebase_messaging: ^14.6.5
+  # firebase_core: ^2.24.2
+  # flutter_local_notifications: ^15.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+
+flutter:
+  generate: true 
+  uses-material-design: true
+
+  assets:
+    - assets/img/
+    - assets/fonts/
+# use google_fonts: true
+
+  # fonts:
+  #     - family: NotoSansKR
+  #       fonts:
+  #         - asset: assets/fonts/NotoSansKR-Regular.ttf
+  #         - asset: assets/fonts/NotoSansKR-Bold.ttf
+  #           weight: 700
+  #     - family: NotoSansJP
+  #       fonts:
+  #         - asset: assets/fonts/NotoSansJP-Regular.ttf
+  #         - asset: assets/fonts/NotoSansJP-Bold.ttf
+  #           weight: 700
+  #     - family: NotoSansSC
+  #       fonts:
+  #         - asset: assets/fonts/NotoSansSC-Regular.ttf
+  #         - asset: assets/fonts/NotoSansSC-Bold.ttf
+  #           weight: 700
+  #     - family: NotoSans
+  #       fonts:
+  #         - asset: assets/fonts/NotoSans-Regular.ttf
+  #         - asset: assets/fonts/NotoSans-Bold.ttf
+  #           weight: 700

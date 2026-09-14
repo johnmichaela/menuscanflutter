@@ -1,0 +1,30 @@
+# Example requests
+
+# 1. Get top-rated restaurants (default)
+GET /api/restaurants/top-rated/
+
+# 2. With pagination
+GET /api/restaurants/top-rated/?page=2&page_size=20
+
+# 3. With location (to get distance)
+GET /api/restaurants/top-rated/?lat=40.7128&lon=-74.0060
+
+# 4. Filter by minimum rating and reviews
+GET /api/restaurants/top-rated/?min_rating=4.0&min_reviews=50
+
+# 5. Filter by open status
+GET /api/restaurants/top-rated/?is_open=true
+
+# 6. Search by name or place
+GET /api/restaurants/top-rated/?search=pizza
+
+# 7. Sort by reviews
+GET /api/restaurants/top-rated/?sort_by=reviews
+
+# 8. Sort by distance (requires location)
+GET /api/restaurants/top-rated/?lat=40.7128&lon=-74.0060&sort_by=distance
+
+# 9. Combine multiple filters
+GET /api/restaurants/top-rated/?min_rating=4.0&is_open=true&search=cafe&sort_by=reviews&page=1&page_size=15
+
+/prof/restaurants-by-type/?type_id=2

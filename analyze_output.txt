@@ -1,0 +1,64 @@
+Analyzing lib...                                                
+
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\main.dart:171:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\main.dart:248:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\main.dart:268:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\main.dart:356:68 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\main.dart:422:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\main.dart:533:55 - deprecated_member_use
+  error - The named parameter 'data' is required, but there's no corresponding argument. Try adding the required argument - lib\mains.dart:142:12 - missing_required_argument
+  error - The named parameter 'create' isn't defined. Try correcting the name to an existing named parameter's name, or defining a named parameter with the name 'create' - lib\mains.dart:143:7 - undefined_named_parameter
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\mains.dart:170:43 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\mains.dart:248:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\mains.dart:265:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\mains.dart:342:68 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\mains.dart:408:33 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\mains.dart:519:55 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\mainx.dart:344:32 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\mainx.dart:400:32 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:49:75 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:50:78 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:51:74 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:66:67 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:76:87 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:82:120 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:115:41 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:219:63 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:230:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:258:39 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:282:41 - deprecated_member_use
+   info - Unnecessary use of multiple underscores. Try using '_' - lib\screens.dart:288:117 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores. Try using '_' - lib\screens.dart:288:121 - unnecessary_underscores
+   info - Unnecessary use of string interpolation. Try replacing the string literal with the variable name - lib\screens.dart:312:14 - unnecessary_string_interpolations
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:332:78 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:355:88 - deprecated_member_use
+   info - The private field _simulate could be 'final'. Try making the field 'final' - lib\screens.dart:369:8 - prefer_final_fields
+warning - The value of the field '_simulate' isn't used. Try removing the field, or using it - lib\screens.dart:369:8 - unused_field
+warning - The value of the local variable 'table' isn't used. Try removing the variable or using it - lib\screens.dart:408:11 - unused_local_variable
+   info - Unnecessary use of multiple underscores. Try using '_' - lib\screens.dart:445:136 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores. Try using '_' - lib\screens.dart:445:140 - unnecessary_underscores
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:446:47 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:455:182 - deprecated_member_use
+   info - Unnecessary use of multiple underscores. Try using '_' - lib\screens.dart:455:294 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores. Try using '_' - lib\screens.dart:455:298 - unnecessary_underscores
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:477:78 - deprecated_member_use
+   info - Unnecessary instance of 'Container'. Try removing the 'Container' (but not its children) from the widget tree - lib\screens.dart:489:20 - avoid_unnecessary_containers
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:506:106 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens.dart:560:46 - deprecated_member_use
+   info - Unnecessary use of string interpolation. Try replacing the string literal with the variable name - lib\screens.dart:573:12 - unnecessary_string_interpolations
+   info - Unnecessary use of multiple underscores. Try using '_' - lib\screens.dart:610:76 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores. Try using '_' - lib\screens.dart:610:80 - unnecessary_underscores
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\screens.dart:658:30 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block. Try wrapping the statement in a block - lib\screens.dart:658:64 - curly_braces_in_flow_control_structures
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens2.dart:55:106 - deprecated_member_use
+   info - Unnecessary use of multiple underscores. Try using '_' - lib\screens2.dart:85:109 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores. Try using '_' - lib\screens2.dart:85:113 - unnecessary_underscores
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens2.dart:116:66 - deprecated_member_use
+   info - 'groupValue' is deprecated and shouldn't be used. Use a RadioGroup ancestor to manage group value instead. This feature was deprecated after v3.32.0-0.0.pre. Try replacing the use of the deprecated member with the replacement - lib\screens2.dart:188:13 - deprecated_member_use
+   info - 'onChanged' is deprecated and shouldn't be used. Use RadioGroup to handle value change instead. This feature was deprecated after v3.32.0-0.0.pre. Try replacing the use of the deprecated member with the replacement - lib\screens2.dart:189:13 - deprecated_member_use
+  error - Invalid constant value - lib\screens2.dart:328:56 - invalid_constant
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\screens2.dart:374:76 - deprecated_member_use
+   info - 'withOpacity' is deprecated and shouldn't be used. Use .withValues() to avoid precision loss. Try replacing the use of the deprecated member with the replacement - lib\widgets.dart:36:53 - deprecated_member_use
+   info - Unnecessary use of multiple underscores. Try using '_' - lib\widgets.dart:46:33 - unnecessary_underscores
+   info - Unnecessary use of multiple underscores. Try using '_' - lib\widgets.dart:46:37 - unnecessary_underscores
+

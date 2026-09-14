@@ -1,0 +1,23 @@
+{
+  "@@locale": "zh",
+  "appTitle": "菜单扫描",
+  "settings": "设置",
+  "language": "语言",
+  "theme": "主题",
+  "help": "帮助与支持",
+  "about": "关于",
+  "sendFeedback": "发送反馈",
+  "chooseLanguage": "选择语言",
+  "availableLanguages": "可用语言",
+  "chooseLook": "选择主题",
+  "systemDefault": "系统默认",
+  "light": "浅色",
+  "dark": "深色",
+  "privacyPolicy": "隐私政策",
+  "termsOfService": "服务条款",
+  "contactSupport": "联系支持",
+  "submit": "提交",
+  "cancel": "取消",
+  "rateUs": "评价我们",
+  "share": "分享"
+}

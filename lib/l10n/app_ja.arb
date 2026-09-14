@@ -1,0 +1,23 @@
+{
+  "@@locale": "ja",
+  "appTitle": "メニュースキャン",
+  "settings": "設定",
+  "language": "言語",
+  "theme": "テーマ",
+  "help": "ヘルプとサポート",
+  "about": "アプリについて",
+  "sendFeedback": "フィードバックを送る",
+  "chooseLanguage": "言語を選択",
+  "availableLanguages": "利用可能な言語",
+  "chooseLook": "テーマを選択",
+  "systemDefault": "システムのデフォルト",
+  "light": "ライト",
+  "dark": "ダーク",
+  "privacyPolicy": "プライバシーポリシー",
+  "termsOfService": "利用規約",
+  "contactSupport": "サポートに連絡",
+  "submit": "送信",
+  "cancel": "キャンセル",
+  "rateUs": "評価する",
+  "share": "共有"
+}
