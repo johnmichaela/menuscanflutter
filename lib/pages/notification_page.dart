@@ -137,7 +137,7 @@ Future<void> sendTestNotification() async {
   
   if (token != null) {
     final response = await http.post(
-      Uri.parse('http://192.168.1.115:8000/api/send-notification/'),
+      Uri.parse('https://qopera.app/api/send-notification/'),
       headers: {'Content-Type': 'application/json'},
       body: json.encode({
         'token': token,

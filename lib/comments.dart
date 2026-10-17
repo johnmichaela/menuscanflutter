@@ -48,7 +48,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   try {
     final response = await http.get(
       Uri.parse(
-          'http://192.168.1.115:8000/api/events/${widget.eventId}/comments/'),
+          'https://qopera.app/api/events/${widget.eventId}/comments/'),
       headers: {
         'Content-Type': 'application/json;charset=UTF-8',
         'Accept': '*/*',
@@ -103,7 +103,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   //   try {
   //     final response = await http.post(
   //       Uri.parse(
-  //           'http://192.168.1.115:8000/api/events/${widget.eventId}/comments/'),
+  //           'https://qopera.app/api/events/${widget.eventId}/comments/'),
   //       headers: {
   //         HttpHeaders.authorizationHeader: 'Token$token',
   //         'Content-Type': 'application/json;charset=UTF-8',
@@ -161,7 +161,7 @@ class _CommentsBottomSheetState extends State<CommentsBottomSheet> {
   try {
     final response = await http.post(
       Uri.parse(
-        'http://192.168.1.115:8000/api/events/${widget.eventId}/comments/',
+        'https://qopera.app/api/events/${widget.eventId}/comments/',
       ),
       headers: {
         'Authorization': 'Token $token', // IMPORTANT: space after Token
@@ -227,7 +227,7 @@ print('AUTH = [Token $token]');
     try {
       final response = await http.delete(
         Uri.parse(
-            'http://192.168.1.115:8000/api/events/${widget.eventId}/comments/$commentId/'),
+            'https://qopera.app/api/events/${widget.eventId}/comments/$commentId/'),
         headers: {
           HttpHeaders.contentTypeHeader: 'application/json;charset=UTF-8',
           if (widget.token != null) HttpHeaders.authorizationHeader: 'Token ${token}',
@@ -261,7 +261,7 @@ print('AUTH = [Token $token]');
   //   try {
   //     final response = await http.post(
   //       Uri.parse(
-  //           'http://192.168.1.115:8000/api/events/${widget.eventId}/comments/${comment.id}/like/'),
+  //           'https://qopera.app/api/events/${widget.eventId}/comments/${comment.id}/like/'),
   //       headers: {
   //         'Content-Type': 'application/json;charset=UTF-8',
   //         if (widget.token != null) 'Authorization': 'Token ${widget.token}',

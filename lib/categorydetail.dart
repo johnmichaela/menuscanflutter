@@ -592,7 +592,7 @@ import 'package:ballon/helper.dart';
 import 'package:ballon/models/bussinesstype.dart';
 import 'package:http/http.dart' as http;
 import 'package:ballon/models/profilebytype.dart';
-import 'package:ballon/screens.dart';
+import 'package:ballon/screens/sub/screens.dart';
 import 'package:flutter/material.dart';
 
 class CategoryDetailScreen extends StatefulWidget {
@@ -628,7 +628,7 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     // Note: Android emulator uses 10.0.2.2 to access localhost of the host machine.
     // If testing on a physical device, use your computer's LAN IP (e.g., 192.168.1.115).
     // If using iOS simulator, localhost usually works.
-    final uri = Uri.parse('http://192.168.1.115:8000/prof/restaurants-by-type/?type_id=${widget.typeId}');
+    final uri = Uri.parse('https://qopera.app/prof/restaurants-by-type/?type_id=${widget.typeId}');
 
     try {
       final response = await http.get(uri);

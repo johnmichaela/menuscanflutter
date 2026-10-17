@@ -11,6 +11,28 @@ double? _parseDouble(dynamic value) {
     if (value is String) return double.tryParse(value);
     return null;
 }
+int? _parseInt(dynamic value) {
+  if (value == null) return null;
+
+  // Already an int
+  if (value is int) return value;
+
+  // Double → int (truncates decimals)
+  if (value is double) return value.toInt();
+
+  // String → int
+  if (value is String) {
+    // Handle strings like "523+ businesses" → 523
+    final cleaned = value.replaceAll(RegExp(r'[^0-9-]'), '');
+    if (cleaned.isEmpty) return null;
+    return int.tryParse(cleaned);
+  }
+
+  // Fallback for other types (e.g. num)
+  if (value is num) return value.toInt();
+
+  return null;
+}
 
 Bussinestype bussinestypeFromJson(String str) => Bussinestype.fromJson(json.decode(str));
 
@@ -70,7 +92,7 @@ class Datum {
         icon: json["icon"],
         textColor: json["text_color"],
         description: json["description"],
-        profileCount: json["profile_count"],
+        profileCount: _parseInt(json["profile_count"]),
         avgRating: _parseDouble(json["avg_rating"]), 
         totalReviews: json["total_reviews"],
     );

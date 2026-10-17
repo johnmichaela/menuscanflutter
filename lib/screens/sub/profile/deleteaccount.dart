@@ -65,7 +65,7 @@ class _DeleteUserScreenState extends State<DeleteUserScreen> {
       }
 
       final response = await http.delete(
-        Uri.parse('http://192.168.1.115:8000/prof/api/user/delete/'),
+        Uri.parse('https://qopera.app/prof/api/user/delete/'),
         headers: {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',

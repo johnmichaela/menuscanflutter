@@ -326,7 +326,6 @@
 
 import 'package:ballon/models/event.dart';
 import 'package:flutter/material.dart';
-
 class MultipleImageWidget extends StatelessWidget {
   final List<Images> imageUrls;
   final double height;
@@ -338,6 +337,7 @@ class MultipleImageWidget extends StatelessWidget {
   final Color? overlayColor;
   final int mainImageFlex;
   final int sideImageFlex;
+  final void Function(int index)? onImageTap;
 
   const MultipleImageWidget({
     super.key,
@@ -351,7 +351,494 @@ class MultipleImageWidget extends StatelessWidget {
     this.overlayColor,
     this.mainImageFlex = 2,
     this.sideImageFlex = 1,
+    this.onImageTap,
   });
+
+  @override
+  Widget build(BuildContext context) {
+    if (imageUrls.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: SizedBox(
+        height: height,
+        child: _buildLayout(),
+      ),
+    );
+  }
+
+  // Wrap any image with a tappable GestureDetector at the given index
+  Widget _tap(int index, Widget child) {
+    if (onImageTap == null) return child;
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => onImageTap!(index),
+      child: child,
+    );
+  }
+
+  Widget _buildLayout() {
+    final int count = imageUrls.length;
+    switch (count) {
+      case 1:
+        return _buildSingleImage();
+      case 2:
+        return _buildTwoImages();
+      case 3:
+        return _buildThreeImages();
+      case 4:
+        return _buildFourImages();
+      default:
+        return _buildMoreImages(count);
+    }
+  }
+
+  // 1 Image
+  Widget _buildSingleImage() {
+    return _tap(
+      0,
+      _buildImageWithOverlay(
+        imageUrls[0].image ?? '',
+        isMain: true,
+        borderRadius: BorderRadius.circular(borderRadius),
+      ),
+    );
+  }
+
+  // 2 Images
+  Widget _buildTwoImages() {
+    return Row(
+      children: [
+        Expanded(
+          child: _tap(
+            0,
+            _buildImageWithOverlay(
+              imageUrls[0].image ?? '',
+              isMain: true,
+              borderRadius:
+                  BorderRadius.horizontal(left: Radius.circular(borderRadius)),
+            ),
+          ),
+        ),
+        SizedBox(width: spacing),
+        Expanded(
+          child: _tap(
+            1,
+            _buildImageWithOverlay(
+              imageUrls[1].image ?? '',
+              borderRadius: BorderRadius.horizontal(
+                  right: Radius.circular(borderRadius)),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 3 Images
+  Widget _buildThreeImages() {
+    return Row(
+      children: [
+        Expanded(
+          flex: mainImageFlex,
+          child: _tap(
+            0,
+            _buildImageWithOverlay(
+              imageUrls[0].image ?? '',
+              isMain: true,
+              borderRadius:
+                  BorderRadius.horizontal(left: Radius.circular(borderRadius)),
+            ),
+          ),
+        ),
+        SizedBox(width: spacing),
+        Expanded(
+          flex: sideImageFlex,
+          child: Column(
+            children: [
+              Expanded(
+                child: _tap(
+                  1,
+                  _buildSideImage(imageUrls[1].image ?? '', topRadius: true),
+                ),
+              ),
+              SizedBox(height: spacing),
+              Expanded(
+                child: _tap(
+                  2,
+                  _buildSideImage(imageUrls[2].image ?? '', bottomRadius: true),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 4 Images
+  Widget _buildFourImages() {
+    return Row(
+      children: [
+        Expanded(
+          flex: mainImageFlex,
+          child: _tap(
+            0,
+            _buildImageWithOverlay(
+              imageUrls[0].image ?? '',
+              isMain: true,
+              borderRadius:
+                  BorderRadius.horizontal(left: Radius.circular(borderRadius)),
+            ),
+          ),
+        ),
+        SizedBox(width: spacing),
+        Expanded(
+          flex: sideImageFlex,
+          child: Column(
+            children: [
+              Expanded(
+                child: _tap(
+                  1,
+                  _buildSideImage(imageUrls[1].image ?? '', topRadius: true),
+                ),
+              ),
+              SizedBox(height: spacing),
+              Expanded(
+                child: _tap(
+                  2,
+                  _buildSideImage(imageUrls[2].image ?? ''),
+                ),
+              ),
+              SizedBox(height: spacing),
+              Expanded(
+                child: _tap(
+                  3,
+                  _buildSideImage(imageUrls[3].image ?? '',
+                      bottomRadius: true),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // 5+ Images (with +N overlay on last visible)
+  Widget _buildMoreImages(int totalCount) {
+    final firstImage = imageUrls[0].image ?? '';
+    final remainingImages = imageUrls.skip(1).toList();
+    final int remainingCount = remainingImages.length;
+
+    final List<Images> displayImages = remainingImages.take(3).toList();
+    final int extraCount = remainingCount - 3;
+
+    return Row(
+      children: [
+        Expanded(
+          flex: mainImageFlex,
+          child: _tap(
+            0,
+            _buildImageWithOverlay(
+              firstImage,
+              isMain: true,
+              borderRadius:
+                  BorderRadius.horizontal(left: Radius.circular(borderRadius)),
+            ),
+          ),
+        ),
+        SizedBox(width: spacing),
+        Expanded(
+          flex: sideImageFlex,
+          child: Column(
+            children: [
+              Expanded(
+                child: _tap(
+                  1,
+                  _buildSideImage(displayImages[0].image ?? '',
+                      topRadius: true),
+                ),
+              ),
+              SizedBox(height: spacing),
+              Expanded(
+                child: _tap(
+                  2,
+                  _buildSideImage(displayImages[1].image ?? ''),
+                ),
+              ),
+              SizedBox(height: spacing),
+              Expanded(
+                // Tapping the +N badge should open the viewer at the 4th image
+                child: _tap(
+                  3,
+                  _buildSideImageWithCount(
+                    displayImages[2].image ?? '',
+                    extraCount: extraCount,
+                    bottomRadius: true,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // -------- helpers (unchanged visuals) --------
+
+  Widget _buildSideImageWithCount(
+    String url, {
+    required int extraCount,
+    bool topRadius = false,
+    bool bottomRadius = false,
+    bool leftRadius = false,
+    bool rightRadius = false,
+  }) {
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.only(
+              topLeft: topRadius && leftRadius
+                  ? Radius.circular(borderRadius)
+                  : Radius.zero,
+              topRight: topRadius && rightRadius
+                  ? Radius.circular(borderRadius)
+                  : Radius.zero,
+              bottomLeft: bottomRadius && leftRadius
+                  ? Radius.circular(borderRadius)
+                  : Radius.zero,
+              bottomRight: bottomRadius && rightRadius
+                  ? Radius.circular(borderRadius)
+                  : Radius.zero,
+            ),
+            image: DecorationImage(
+              image: NetworkImage(url),
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.only(
+              topLeft: topRadius && leftRadius
+                  ? Radius.circular(borderRadius)
+                  : Radius.zero,
+              topRight: topRadius && rightRadius
+                  ? Radius.circular(borderRadius)
+                  : Radius.zero,
+              bottomLeft: bottomRadius && leftRadius
+                  ? Radius.circular(borderRadius)
+                  : Radius.zero,
+              bottomRight: bottomRadius && rightRadius
+                  ? Radius.circular(borderRadius)
+                  : Radius.zero,
+            ),
+            color: extraCount > 0
+                ? Colors.black.withOpacity(0.5)
+                : Colors.transparent,
+          ),
+        ),
+        if (extraCount > 0)
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  '+$extraCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Text(
+                  'more',
+                  style: TextStyle(color: Colors.white70, fontSize: 12),
+                ),
+              ],
+            ),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildSideImage(
+    String url, {
+    bool topRadius = false,
+    bool bottomRadius = false,
+    bool leftRadius = false,
+    bool rightRadius = false,
+  }) {
+    if (url.isEmpty) {
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.only(
+            topLeft: topRadius && leftRadius
+                ? Radius.circular(borderRadius)
+                : Radius.zero,
+            topRight: topRadius && rightRadius
+                ? Radius.circular(borderRadius)
+                : Radius.zero,
+            bottomLeft: bottomRadius && leftRadius
+                ? Radius.circular(borderRadius)
+                : Radius.zero,
+            bottomRight: bottomRadius && rightRadius
+                ? Radius.circular(borderRadius)
+                : Radius.zero,
+          ),
+          color: Colors.grey[300],
+        ),
+        child: const Center(child: Icon(Icons.image, color: Colors.grey)),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.only(
+          topLeft: topRadius && leftRadius
+              ? Radius.circular(borderRadius)
+              : Radius.zero,
+          topRight: topRadius && rightRadius
+              ? Radius.circular(borderRadius)
+              : Radius.zero,
+          bottomLeft: bottomRadius && leftRadius
+              ? Radius.circular(borderRadius)
+              : Radius.zero,
+          bottomRight: bottomRadius && rightRadius
+              ? Radius.circular(borderRadius)
+              : Radius.zero,
+        ),
+        image: DecorationImage(
+          image: NetworkImage(url),
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageWithOverlay(
+    String url, {
+    bool isMain = false,
+    required BorderRadius borderRadius,
+    String? title,
+    String? subtitle,
+    bool showFeatured = false,
+  }) {
+    if (url.isEmpty) {
+      return Container(
+        decoration: BoxDecoration(
+          borderRadius: borderRadius,
+          color: Colors.grey[300],
+        ),
+        child: const Center(
+          child: Icon(Icons.image, color: Colors.grey, size: 50),
+        ),
+      );
+    }
+
+    return Stack(
+      children: [
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: borderRadius,
+            image: DecorationImage(
+              image: NetworkImage(url),
+              fit: BoxFit.cover,
+            ),
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            borderRadius: borderRadius,
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: isMain
+                  ? [Colors.transparent, Colors.black54]
+                  : [Colors.transparent, Colors.black38],
+            ),
+          ),
+        ),
+        if (isMain && (showFeatured || this.showFeatured))
+          Positioned(
+            top: 12,
+            left: 12,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.black.withOpacity(0.6),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.star, size: 14, color: Colors.yellow),
+                  SizedBox(width: 4),
+                  Text(
+                    "Featured",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        if (isMain)
+          Positioned(
+            bottom: 16,
+            left: 12,
+            right: 12,
+            child: Text(
+              title ?? mainTitle ?? "Event Title 🎉",
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 17,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+      ],
+    );
+  }
+}
+class MultipleImageWidgetxx extends StatelessWidget {
+  final List<Images> imageUrls;
+  final double height;
+  final double spacing;
+  final double borderRadius;
+  final String? mainTitle;
+  final String? mainSubtitle;
+  final bool showFeatured;
+  final Color? overlayColor;
+  final int mainImageFlex;
+  final int sideImageFlex;
+  final void Function(int index)? onImageTap; 
+
+  const MultipleImageWidgetxx({
+    super.key,
+    required this.imageUrls,
+    this.height = 280,
+    this.spacing = 4,
+    this.borderRadius = 12,
+    this.mainTitle,
+    this.mainSubtitle,
+    this.showFeatured = false,
+    this.overlayColor,
+    this.mainImageFlex = 2,
+    this.sideImageFlex = 1,
+     this.onImageTap,   
+  });
+
 
   @override
   Widget build(BuildContext context) {
@@ -363,7 +850,10 @@ class MultipleImageWidget extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
       child: SizedBox(
         height: height,
-        child: _buildLayout(),
+        child:  GestureDetector(
+        onTap: onImageTap == null ? null : () => onImageTap!(0),
+      
+          child: _buildLayout()),
       ),
     );
   }
@@ -754,15 +1244,15 @@ class MultipleImageWidget extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  subtitle ?? mainSubtitle ?? "Great moments await you!",
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 11,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
+                // Text(
+                //   subtitle ?? mainSubtitle ?? "Great moments await you!",
+                //   style: const TextStyle(
+                //     color: Colors.white70,
+                //     fontSize: 11,
+                //   ),
+                //   maxLines: 2,
+                //   overflow: TextOverflow.ellipsis,
+                // ),
               ],
             ),
           ),

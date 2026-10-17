@@ -5,7 +5,7 @@ import 'package:ballon/profile.dart';
 import 'package:ballon/qr_scanner_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:ballon/screens.dart';
+import 'package:ballon/screens/sub/screens.dart';
 // Import your screens
 // import 'package:ballon/profile_screen.dart';
 // import 'package:ballon/settings_screen.dart';
@@ -196,7 +196,7 @@ class _SidebarWidgetState extends State<SidebarWidget> {
       final String? token = prefs.getString('token');
       if (token != null) {
         // await http.post(
-        //   Uri.parse('http://192.168.1.115:8000/api/logout/'),
+        //   Uri.parse('https://qopera.app/api/logout/'),
         //   headers: {'Authorization': 'Bearer $token'},
         // );
       }

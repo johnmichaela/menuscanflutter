@@ -41,7 +41,7 @@ class _LoginScreenState extends State<LoginScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => BalloonApp(),
+            builder: (context) => QoperaApp(),
           ),
         );
 
@@ -72,7 +72,7 @@ class _LoginScreenState extends State<LoginScreen> {
 void loginTest() async {
     try {
       Response response = await post(
-          Uri.parse('http://192.168.1.115:8000/prof/api/login/'),
+          Uri.parse('https://qopera.app/prof/api/login/'),
           body: {
             'username': nameController.text,
             'password': passwordController.text
@@ -91,7 +91,7 @@ void loginTest() async {
        Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => BalloonApp(),
+            builder: (context) => QoperaApp(),
           ),
         );
       } else {
@@ -191,7 +191,7 @@ void loginTest() async {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final dark = isDarkMode;
+    final dark =  Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
       backgroundColor: dark
@@ -251,37 +251,37 @@ void loginTest() async {
                       const SizedBox(height: 20),
                   
                       // Theme switch
-                      Align(
-                        alignment: Alignment.topRight,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: dark
-                                ? Colors.white.withOpacity(.10)
-                                : Colors.white.withOpacity(.85),
-                            borderRadius: BorderRadius.circular(30),
-                            border: Border.all(
-                              color: dark
-                                  ? Colors.white24
-                                  : Colors.blue.shade100,
-                            ),
-                          ),
-                          child: IconButton(
-                            onPressed: () {
-                              setState(() {
-                                isDarkMode = !isDarkMode;
-                              });
-                            },
-                            icon: Icon(
-                              dark
-                                  ? Icons.light_mode_rounded
-                                  : Icons.dark_mode_rounded,
-                              color: dark
-                                  ? Colors.white
-                                  : const Color(0xFF0755C9),
-                            ),
-                          ),
-                        ),
-                      ),
+                      // Align(
+                      //   alignment: Alignment.topRight,
+                      //   child: Container(
+                      //     decoration: BoxDecoration(
+                      //       color: dark
+                      //           ? Colors.white.withOpacity(.10)
+                      //           : Colors.white.withOpacity(.85),
+                      //       borderRadius: BorderRadius.circular(30),
+                      //       border: Border.all(
+                      //         color: dark
+                      //             ? Colors.white24
+                      //             : Colors.blue.shade100,
+                      //       ),
+                      //     ),
+                      //     child: IconButton(
+                      //       onPressed: () {
+                      //         setState(() {
+                      //           isDarkMode = !isDarkMode;
+                      //         });
+                      //       },
+                      //       icon: Icon(
+                      //         dark
+                      //             ? Icons.light_mode_rounded
+                      //             : Icons.dark_mode_rounded,
+                      //         color: dark
+                      //             ? Colors.white
+                      //             : const Color(0xFF0755C9),
+                      //       ),
+                      //     ),
+                      //   ),
+                      // ),
                   
                       const SizedBox(height: 25),
                   
@@ -368,7 +368,7 @@ void loginTest() async {
                         children: [
                           Checkbox(
                             value: rememberMe,
-                            activeColor: const Color(0xFF087CFF),
+                            activeColor: Theme.of(context).primaryColor,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(5),
                             ),
@@ -397,7 +397,7 @@ void loginTest() async {
                             child: Text(
                                context.tr.forgotPassword,
                               style: TextStyle(
-                                color: Color(0xFF087CFF),
+                                color: Theme.of(context).primaryColor,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
@@ -414,11 +414,11 @@ void loginTest() async {
                         child: ElevatedButton(
                           onPressed:(){ loginTest(); },
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF087CFF),
+                            backgroundColor: Theme.of(context).primaryColor,
                             foregroundColor: Colors.white,
                             elevation: 5,
                             shadowColor:
-                                const Color(0xFF087CFF).withOpacity(.35),
+                                Theme.of(context).primaryColor.withOpacity(.35),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(18),
                             ),
@@ -473,55 +473,56 @@ void loginTest() async {
                       const SizedBox(height: 18),
                   
                       // Google button
-                      SizedBox(
-                        width: double.infinity,
-                        height: 55,
-                        child: OutlinedButton(
-                          onPressed: () {
-                            // TODO: Google authentication
-                          },
-                          style: OutlinedButton.styleFrom(
-                            side: BorderSide(
-                              color: dark
-                                  ? const Color(0xFF4D9EFF)
-                                  : const Color(0xFF9DBBE5),
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18),
-                            ),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              // Simple Google-style icon
-                              Container(
-                                width: 25,
-                                height: 25,
-                                alignment: Alignment.center,
-                                child: const Text(
-                                  'G',
-                                  style: TextStyle(
-                                    fontSize: 23,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.blue,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                 context.tr.continueWithGoogle,
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w600,
-                                  color: dark
-                                      ? Colors.white
-                                      : const Color(0xFF123D91),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      // SizedBox(
+                      //   width: double.infinity,
+                      //   height: 55,
+                      //   child: OutlinedButton(
+                      //     onPressed: () {
+                      //       // TODO: Google authentication
+                      //     },
+                      //     style: OutlinedButton.styleFrom(
+                      //       side: BorderSide(
+                      //         color: dark
+                      //             ? const Color(0xFF4D9EFF)
+                      //             : const Color(0xFF9DBBE5),
+                      //       ),
+                      //       shape: RoundedRectangleBorder(
+                      //         borderRadius: BorderRadius.circular(18),
+                      //       ),
+                      //     ),
+                      //     child: Row(
+                      //       mainAxisAlignment: MainAxisAlignment.center,
+                      //       children: [
+                      //         // Simple Google-style icon
+                      //         Container(
+                      //           width: 25,
+                      //           height: 25,
+                      //           alignment: Alignment.center,
+                      //           child: const Text(
+                      //             'G',
+                      //             style: TextStyle(
+                      //               fontSize: 23,
+                      //               fontWeight: FontWeight.bold,
+                      //               color: Colors.blue,
+                      //             ),
+                      //           ),
+                      //         ),
+                      //         const SizedBox(width: 12),
+                      //         Text(
+                      //            context.tr.continueWithGoogle,
+                      //           style: TextStyle(
+                      //             fontSize: 16,
+                      //             fontWeight: FontWeight.w600,
+                      //             color: dark
+                      //                 ? Colors.white
+                      //                 : const Color(0xFF123D91),
+                      //           ),
+                      //         ),
+                      //       ],
+                      //     ),
+                      //   ),
+                      // ),
+                    
                      SizedBox(
             width: double.infinity,
             height: 55,
@@ -605,7 +606,7 @@ void loginTest() async {
                               child: Text(
                                 context.tr.signUp,
                                 style: TextStyle(
-                                  color: Color(0xFF087CFF),
+                                  color: Theme.of(context).primaryColor,
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),

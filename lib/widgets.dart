@@ -121,18 +121,18 @@ class FoodCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(10),
           boxShadow: [
   BoxShadow(
-    color: Colors.black.withValues(alpha: 0.06),
+    color: const Color.fromARGB(255, 122, 122, 122).withValues(alpha: 0.06),
     blurRadius: 16,
     offset: const Offset(0, 6),
   ),
   BoxShadow(
-    color: Colors.black.withValues(alpha: 0.03),
+    color: const Color.fromARGB(255, 102, 102, 102).withValues(alpha: 0.03),
     blurRadius: 8,
     offset: const Offset(0, 2),
   ),
@@ -149,12 +149,12 @@ class FoodCard extends StatelessWidget {
           children: [
             // Food image
             ClipRRect(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(10),
               child: imageUrl.isNotEmpty
                   ? Image.network(
                       imageUrl,
                       width: 80,
-                      height: 80,
+                      height: 85,
                       fit: BoxFit.cover,
                       errorBuilder: (context, error, stackTrace) {
                         return Container(
@@ -280,7 +280,11 @@ class FoodCard extends StatelessWidget {
             ),
 
             const SizedBox(width: 8),
-
+Icon(
+              Icons.arrow_forward_ios,
+              color: Theme.of(context).primaryColor,
+              size: 20,
+            ),
             // Add button
             // GestureDetector(
             //   onTap: onAdd,

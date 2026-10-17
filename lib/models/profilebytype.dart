@@ -379,6 +379,7 @@ class TypeBusinessDetails {
     final String? color;
     final String? textColor;
     final String? icon;
+    final String? cover;
     final String? description;
     final DateTime? timestamp;
 
@@ -388,6 +389,7 @@ class TypeBusinessDetails {
         this.color,
         this.textColor,
         this.icon,
+        this.cover,
         this.description,
         this.timestamp,
     });
@@ -398,6 +400,7 @@ class TypeBusinessDetails {
         color: json["color"],
         textColor: json["text_color"],
         icon: json["icon"],
+        cover:json["cover"],
         description: json["description"],
         timestamp: json["timestamp"] == null ? null : DateTime.parse(json["timestamp"]),
     );
@@ -408,6 +411,7 @@ class TypeBusinessDetails {
         "color": color,
         "text_color": textColor,
         "icon": icon,
+        "cover":cover,
         "description": description,
         "timestamp": timestamp?.toIso8601String(),
     };

@@ -443,7 +443,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
  Future<void> register(String username, email, password, password1) async {
     print(username + email + password + password1);
     final http.Response response = await http.post(
-      Uri.parse("http://192.168.1.115:8000/api/register/"),
+      Uri.parse("https://qopera.app/api/register/"),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         // ignore: prefer_interpolation_to_compose_strings
@@ -497,7 +497,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
   void loginTest() async {
     try {
       Response response = await post(
-          Uri.parse('http://192.168.1.115:8000/prof/api/login/'),
+          Uri.parse('https://qopera.app/prof/api/login/'),
           body: {
             'username': usernameController.text,
             'password': passwordController.text

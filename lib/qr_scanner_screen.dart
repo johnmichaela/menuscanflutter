@@ -6,8 +6,9 @@ import 'package:provider/provider.dart';
 
 import 'app_state.dart';
 import 'models.dart';
-import 'screens.dart';
+import 'screens/sub/screens.dart';
 import 'services/api_service.dart';
+import 'package:ballon/l10n/app_strings.dart';
 
 /// Real QR scanner screen.
 ///
@@ -93,16 +94,16 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(
+      builder: (_) => Center(
         child: Card(
           child: Padding(
-            padding: EdgeInsets.all(24),
+            padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                CircularProgressIndicator(),
-                SizedBox(height: 16),
-                Text('Loading menu...'),
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(context.tr.loadingMenu),
               ],
             ),
           ),
@@ -120,7 +121,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Scan QR Code'),
+        title:  Text(context.tr.scanQrCode),
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -157,8 +158,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
             right: 0,
             child: Column(
               children: [
-                const Text(
-                  'Point camera at the QR code on the table',
+                 Text( context.tr.pointCameraAtQr,
                   style: TextStyle(color: Colors.white70, fontSize: 14),
                 ),
 const SizedBox(height: 16),

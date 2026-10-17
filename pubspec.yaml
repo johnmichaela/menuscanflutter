@@ -35,6 +35,11 @@ dependencies:
   pull_to_refresh: ^2.0.0
   font_awesome_flutter: ^11.0.0
   google_sign_in: ^6.2.1
+  cached_network_image: ^3.4.1
+  geocoding: ^4.0.0
+  flutterwave_standard: ^1.1.0
+  # webview_flutter: ^4.10.0
+  gal: ^2.3.1
   # firebase_messaging: ^14.6.5
   # firebase_core: ^2.24.2
   # flutter_local_notifications: ^15.1.0
@@ -75,3 +80,8 @@ flutter:
   #         - asset: assets/fonts/NotoSans-Regular.ttf
   #         - asset: assets/fonts/NotoSans-Bold.ttf
   #           weight: 700
+# dependency_overrides:
+#   flutter_inappwebview: 6.2.0-beta.3
+dependency_overrides:
+  fluttertoast: ^10.0.0
+  flutter_inappwebview: 6.2.0-beta.3

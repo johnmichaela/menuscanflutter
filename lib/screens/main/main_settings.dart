@@ -2,10 +2,17 @@ import 'dart:convert';
 // import 'package:ballon/auth_screens.dart';
 import 'package:ballon/screens/sub/ThemeSettingsPage.dart';
 import 'package:ballon/screens/sub/about.dart';
+import 'package:ballon/screens/sub/event/show_event.dart';
+import 'package:ballon/screens/sub/event/venue_list_screen.dart';
 import 'package:ballon/screens/sub/language_settings_page.dart';
+import 'package:ballon/screens/sub/menu/add_menu.dart';
+import 'package:ballon/screens/sub/post/add_post.dart';
 import 'package:ballon/screens/sub/profile/changepassword.dart';
+import 'package:ballon/screens/sub/profile/editbusiness.dart';
 import 'package:ballon/screens/sub/profile/edit.dart';
 import 'package:ballon/screens/sub/profile/showme.dart';
+import 'package:ballon/screens/sub/profile_qr_card.dart';
+import 'package:ballon/screens/sub/subscription_screen.dart';
 import 'package:ballon/theme_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -35,22 +42,20 @@ class _SettingsPageState extends State<SettingsPage> {
   void initState() {
     super.initState();
     _checkLoginStatus();
-     _loadAllProfileData();
+    _loadAllProfileData();
   }
 
-
   int? profid;
-  String? profileName='';
-  String? profileEmail='';
-  String? profilePhone='';
-  String? profilePlace='';
-  String? profileBio='';
-  String? profilePicture='';
-  String? profileUsername='';
-  
+  String? profileName = '';
+  String? profileEmail = '';
+  String? profilePhone = '';
+  String? profilePlace = '';
+  String? profileBio = '';
+  String? profilePicture = '';
+  String? profileUsername = '';
+  bool? profileIsVisible = false;
+
   bool isLoading = true;
-
-
 
   // ==================== GET TOKEN ====================
   // Future<String?> _getToken() async {
@@ -134,6 +139,14 @@ class _SettingsPageState extends State<SettingsPage> {
     });
     return profileUsername;
   }
+   Future<bool?> _getProfileIsVisible() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      profileIsVisible = prefs.getBool('profile_is_visible');
+      print('   - is_visible: $profileIsVisible');
+    });
+    return profileIsVisible;
+  }
 
   // ==================== LOAD ALL PROFILE DATA ====================
   Future<void> _loadAllProfileData() async {
@@ -149,6 +162,7 @@ class _SettingsPageState extends State<SettingsPage> {
     await _getProfileBio();
     await _getProfilePicture();
     await _getProfileUsername();
+    await _getProfileIsVisible();
 
     setState(() {
       isLoading = false;
@@ -159,10 +173,11 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _refreshAllData() async {
     await _loadAllProfileData();
   }
+
   Future<void> _checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
-    
+
     setState(() {
       _isLoggedIn = token != null && token.isNotEmpty;
       print('Login status: $_isLoggedIn');
@@ -178,11 +193,11 @@ class _SettingsPageState extends State<SettingsPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
-      
+
       if (token == null) return;
 
       final response = await http.get(
-        Uri.parse('http://192.168.1.115:8000/prof/api-prof/'),
+        Uri.parse('https://qopera.app/prof/api-prof/'),
         headers: {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
@@ -206,12 +221,13 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _logout() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('token');
-    
+
     setState(() {
       _isLoggedIn = false;
       _userName = '';
       _userEmail = '';
       _userAvatar = null;
+
     });
 
     // Show logout success message
@@ -225,14 +241,19 @@ class _SettingsPageState extends State<SettingsPage> {
     // Navigate to login or home
     Navigator.pushReplacementNamed(context, '/login');
   }
- 
+
   @override
   Widget build(BuildContext context) {
-     final themeCtrl = context.watch<ThemeController>();
+    final themeCtrl = context.watch<ThemeController>();
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title:  Text(context.tr.settings, style: TextStyle(color:Theme.of(context).textTheme.titleMedium?.color)),
+        title: Text(
+          context.tr.settings,
+          style: TextStyle(
+            color: Theme.of(context).textTheme.titleMedium?.color,
+          ),
+        ),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         elevation: 0,
         iconTheme: Theme.of(context).iconTheme,
@@ -246,7 +267,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   _buildProfileHeader(),
                   const Divider(color: Colors.grey, height: 1),
                 ],
-                
+
                 // --- ACCOUNT SECTION ---
                 _buildSectionTitle(context.tr.account),
                 if (_isLoggedIn) ...[
@@ -260,36 +281,107 @@ class _SettingsPageState extends State<SettingsPage> {
                     icon: Icons.lock,
                     title: context.tr.changePassword,
                     subtitle: context.tr.updateYourPassword,
-                    onTap: ()  => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => ChangePasswordScreen(),
-                        ),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChangePasswordScreen(),
                       ),
+                    ),
                   ),
-                  // _buildSettingTile(
-                  //   icon: Icons.email,
-                  //   title: context.tr.emailSettings,
-                  //   subtitle: context.tr.manageEmailPreferences,
-                  //   onTap: () => _navigateToEmailSettings(context),
-                  // ),
+                 if (profileIsVisible==true)...[
+                  _buildSettingTile(
+                    icon: Icons.storefront_outlined,
+                    title: context.tr.editProfileBusiness,
+                    subtitle: context.tr.editProfileBusinessSub,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => EditProfileBusinessScreen(),
+                      ),
+                    ),
+                  ),
+                    _buildSettingTile(
+                    icon: Icons.location_on_outlined,
+                    title:  context.tr.addVenue,
+                    subtitle: context.tr.addVenueSub,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) =>VenueListScreen()),
+                    ),
+                  ),
+                  _buildSettingTile(
+                    icon: Icons.event_outlined,
+                    title: context.tr.addEvents,
+                    subtitle: context.tr.addEventsSub,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => EventListScreen()),
+                    ),
+                  ),
+                  _buildSettingTile(
+                    icon: Icons.shopping_bag_outlined,
+                    title: context.tr.addProductsServices,
+                    subtitle: context.tr.addProductsServicesSub,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => MenuPage()),
+                    ),
+                  ),
+                  _buildSettingTile(
+                    icon: Icons.article_outlined,
+                    title: context.tr.addPosts,
+                    subtitle: context.tr.addPostsSub,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => AddPostScreen()),
+                    ),
+                  ),
+                   _buildSettingTile(
+                    icon: Icons.qr_code,
+                    title: context.tr.qrCode,
+                    subtitle: context.tr.qrCodeSub,
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => ProfileQrCard(profileId: profid!,)),
+                    ),
+                  ),
+                //   const Divider(color: Colors.grey, height: 1),
+                //    // --- Payment SECTION ---
+                // _buildSectionTitle('Payment'),
+                // _buildSettingTile(
+                //   icon: Icons.payment,
+                //   title: 'Payment Settings',
+                //   subtitle: 'Manage your subscription and payment methods',
+                //   onTap: () => Navigator.push(
+                //     context,
+                //     MaterialPageRoute(builder: (_) => SubscriptionScreen()),
+                //   ),
+                 
+                // ),
+                ]
                 ] else ...[
                   _buildSettingTile(
                     icon: Icons.login,
                     title: context.tr.login,
                     subtitle: context.tr.signInToYourAccount,
-                    onTap: () =>  Navigator.push(context, MaterialPageRoute(builder: (_) => LoginScreen())),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => LoginScreen()),
+                    ),
                   ),
                   _buildSettingTile(
                     icon: Icons.person_add,
                     title: context.tr.register,
                     subtitle: context.tr.createNewAccount,
-                    onTap: () =>  Navigator.push(context, MaterialPageRoute(builder: (_) => SignupScreen())),
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (_) => SignupScreen()),
+                    ),
                   ),
                 ],
-                
+
                 const Divider(color: Colors.grey, height: 1),
-                
+
                 // --- PREFERENCES SECTION ---
                 _buildSectionTitle(context.tr.preferences),
                 _buildSettingTile(
@@ -297,7 +389,10 @@ class _SettingsPageState extends State<SettingsPage> {
                   title: context.tr.language,
                   subtitle: context.tr.english,
                   onTap: () => _navigateToLanguageSettings(context),
-                  trailing:  Text(Localizations.localeOf(context).languageCode.toUpperCase(), style: TextStyle(color: Colors.grey)),
+                  trailing: Text(
+                    Localizations.localeOf(context).languageCode.toUpperCase(),
+                    style: TextStyle(color: Colors.grey),
+                  ),
                 ),
                 _buildSettingTile(
                   icon: Icons.notifications,
@@ -306,14 +401,16 @@ class _SettingsPageState extends State<SettingsPage> {
                   onTap: () => _navigateToNotificationSettings(context),
                 ),
                 _buildSettingTile(
-                  icon: themeCtrl.mode.isDark ? Icons.dark_mode : Icons.light_mode,
+                  icon: themeCtrl.mode.isDark
+                      ? Icons.dark_mode
+                      : Icons.light_mode,
                   title: context.tr.theme,
                   subtitle: context.tr.darkMode,
                   onTap: () => _navigateToThemeSettings(context),
                 ),
-                
+
                 const Divider(color: Colors.grey, height: 1),
-                
+
                 // --- SUPPORT SECTION ---
                 _buildSectionTitle(context.tr.support),
                 _buildSettingTile(
@@ -334,9 +431,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   subtitle: 'Version 1.0.0',
                   onTap: () => _navigateToAbout(context),
                 ),
-                
+
                 const Divider(color: Colors.grey, height: 1),
-                
+
                 // --- DANGER ZONE ---
                 if (_isLoggedIn) ...[
                   _buildSectionTitle(context.tr.accountManagement),
@@ -357,7 +454,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     textColor: Colors.red,
                   ),
                 ],
-                
+
                 const SizedBox(height: 30),
               ],
             ),
@@ -367,28 +464,34 @@ class _SettingsPageState extends State<SettingsPage> {
   // --- PROFILE HEADER WIDGET ---
   Widget _buildProfileHeader() {
     return GestureDetector(
-     onTap: () => Navigator.push(
-  context,
-  MaterialPageRoute(
-    builder: (context) => ProfileShowScreen(),
-  ),
-), 
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => ProfileShowScreen()),
+      ),
       child: Container(
         padding: const EdgeInsets.all(20),
         child: Row(
           children: [
             // Avatar
-                  CircleAvatar(
+            CircleAvatar(
               radius: 38,
               backgroundColor: Theme.of(context).primaryColor,
               child: CircleAvatar(
                 radius: 36,
                 backgroundColor: Theme.of(context).primaryColor,
-                backgroundImage: profilePicture == null && profilePicture!.isEmpty ? NetworkImage(profilePicture!) : null,
+                backgroundImage:
+                    profilePicture != null && profilePicture!.isNotEmpty
+                    ? NetworkImage(profilePicture!)
+                    : null,
                 child: profilePicture == null && profilePicture!.isEmpty
                     ? Text(
-                        profileName!.isNotEmpty ? profileName![0].toUpperCase() : 'U',
-                        style: const TextStyle(fontSize: 30, color: Colors.white),
+                        profileName!.isNotEmpty
+                            ? profileName![0].toUpperCase()
+                            : 'U',
+                        style: const TextStyle(
+                          fontSize: 30,
+                          color: Colors.white,
+                        ),
                       )
                     : null,
               ),
@@ -400,8 +503,8 @@ class _SettingsPageState extends State<SettingsPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    profileName??"User",
-                    style:  TextStyle(
+                    profileName ?? "User",
+                    style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.bold,
                       color: Theme.of(context).textTheme.titleMedium?.color,
@@ -409,12 +512,18 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    profileEmail??"Email",
-                    style:  TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 14),
+                    profileEmail ?? "Email",
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                      fontSize: 14,
+                    ),
                   ),
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
                       color: Theme.of(context).primaryColor.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
@@ -429,7 +538,10 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             IconButton(
               onPressed: () => _navigateToEditProfile(context),
-              icon: Icon(Icons.edit, color: Theme.of(context).textTheme.titleMedium?.color),
+              icon: Icon(
+                Icons.edit,
+                color: Theme.of(context).textTheme.titleMedium?.color,
+              ),
             ),
           ],
         ),
@@ -463,16 +575,30 @@ class _SettingsPageState extends State<SettingsPage> {
     Color? textColor,
   }) {
     return ListTile(
-      leading: Icon(icon, color: iconColor ?? Theme.of(context).textTheme.bodyMedium?.color),
+      leading: Icon(
+        icon,
+        color: iconColor ?? Theme.of(context).textTheme.bodyMedium?.color,
+      ),
       title: Text(
         title,
-        style: TextStyle(color: textColor ?? Theme.of(context).textTheme.bodyMedium?.color),
+        style: TextStyle(
+          color: textColor ?? Theme.of(context).textTheme.bodyMedium?.color,
+        ),
       ),
       subtitle: Text(
         subtitle,
-        style:  TextStyle(color: textColor ?? Theme.of(context).textTheme.bodyMedium?.color, fontSize: 12),
+        style: TextStyle(
+          color: textColor ?? Theme.of(context).textTheme.bodyMedium?.color,
+          fontSize: 12,
+        ),
       ),
-      trailing: trailing ??  Icon(Icons.arrow_forward_ios, color: Theme.of(context).textTheme.bodyMedium?.color, size: 16),
+      trailing:
+          trailing ??
+          Icon(
+            Icons.arrow_forward_ios,
+            color: Theme.of(context).textTheme.bodyMedium?.color,
+            size: 16,
+          ),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
@@ -548,22 +674,25 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1E),
-        title: const Text('Logout', style: TextStyle(color: Colors.white)),
-        content: const Text(
-          'Are you sure you want to logout?',
+        title: Text(context.tr.logout, style: TextStyle(color: Colors.white)),
+        content: Text(
+          context.tr.areYouSureYouWantToLogout,
           style: TextStyle(color: Colors.grey),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: Text(
+              context.tr.cancel,
+              style: TextStyle(color: Colors.grey),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               _logout();
             },
-            child: const Text('Logout', style: TextStyle(color: Colors.red)),
+            child: Text(context.tr.logout, style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -575,22 +704,28 @@ class _SettingsPageState extends State<SettingsPage> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: const Color(0xFF1C1C1E),
-        title: const Text('Delete Account', style: TextStyle(color: Colors.red)),
-        content: const Text(
-          'This action cannot be undone. Are you sure you want to delete your account permanently?',
+        title: Text(
+          context.tr.deleteAccount,
+          style: TextStyle(color: Colors.red),
+        ),
+        content: Text(
+          context.tr.thisActionCannotBeUndone,
           style: TextStyle(color: Colors.grey),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: Text(
+              context.tr.cancel,
+              style: TextStyle(color: Colors.grey),
+            ),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               _deleteAccount();
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(context.tr.delete, style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -601,11 +736,11 @@ class _SettingsPageState extends State<SettingsPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
-      
+
       if (token == null) return;
 
       final response = await http.delete(
-        Uri.parse('http://192.168.1.115:8000/prof/api/user/delete/'),
+        Uri.parse('https://qopera.app/prof/api/user/delete/'),
         headers: {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
@@ -654,11 +789,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
-      
+
       if (token == null) return;
 
       final response = await http.get(
-        Uri.parse('http://192.168.1.115:8000/prof/api/user/profile/'),
+        Uri.parse('https://qopera.app/prof/api/user/profile/'),
         headers: {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
@@ -688,14 +823,14 @@ class _EditProfilePageState extends State<EditProfilePage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
-      
+
       if (token == null) {
         setState(() => _isSaving = false);
         return;
       }
 
       final response = await http.put(
-        Uri.parse('http://192.168.1.115:8000/prof/api/profile/update/'),
+        Uri.parse('https://qopera.app/prof/api/profile/update/'),
         headers: {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
@@ -709,12 +844,18 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile updated successfully'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Profile updated successfully'),
+            backgroundColor: Colors.green,
+          ),
         );
         Navigator.pop(context, true);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${response.statusCode}'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error: ${response.statusCode}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
@@ -731,7 +872,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Edit Profile', style: TextStyle(color: Colors.white)),
+        title: Text(
+          context.tr.editProfile,
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.black,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -739,8 +883,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
           TextButton(
             onPressed: _isSaving ? null : _saveProfile,
             child: Text(
-              _isSaving ? 'Saving...' : 'Save',
-              style: const TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+              _isSaving ? context.tr.saving : context.tr.save,
+              style: const TextStyle(
+                color: Colors.blue,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -760,7 +907,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                           CircleAvatar(
                             radius: 60,
                             backgroundColor: const Color(0xFF1C1C1E),
-                            child: const Icon(Icons.person, size: 60, color: Colors.grey),
+                            child: const Icon(
+                              Icons.person,
+                              size: 60,
+                              color: Colors.grey,
+                            ),
                           ),
                           Positioned(
                             bottom: 0,
@@ -771,20 +922,24 @@ class _EditProfilePageState extends State<EditProfilePage> {
                                 color: Colors.blue,
                                 shape: BoxShape.circle,
                               ),
-                              child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
+                              child: const Icon(
+                                Icons.camera_alt,
+                                color: Colors.white,
+                                size: 20,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
                     const SizedBox(height: 30),
-                    
+
                     // Name
                     TextFormField(
                       controller: _nameController,
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        labelText: 'Full Name',
+                      decoration: InputDecoration(
+                        labelText: context.tr.fullName,
                         labelStyle: TextStyle(color: Colors.grey),
                         filled: true,
                         fillColor: Color(0xFF1C1C1E),
@@ -795,19 +950,19 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       ),
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your name';
+                          return context.tr.pleaseEnterYourName;
                         }
                         return null;
                       },
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Email
                     TextFormField(
                       controller: _emailController,
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
+                      decoration: InputDecoration(
+                        labelText: context.tr.email,
                         labelStyle: TextStyle(color: Colors.grey),
                         filled: true,
                         fillColor: Color(0xFF1C1C1E),
@@ -819,7 +974,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return 'Please enter your email';
+                          return context.tr.pleaseEnterYourEmail;
                         }
                         if (!value.contains('@')) {
                           return 'Please enter a valid email';
@@ -828,13 +983,13 @@ class _EditProfilePageState extends State<EditProfilePage> {
                       },
                     ),
                     const SizedBox(height: 16),
-                    
+
                     // Phone
                     TextFormField(
                       controller: _phoneController,
                       style: const TextStyle(color: Colors.white),
-                      decoration: const InputDecoration(
-                        labelText: 'Phone Number',
+                      decoration: InputDecoration(
+                        labelText: context.tr.phoneNumber,
                         labelStyle: TextStyle(color: Colors.grey),
                         filled: true,
                         fillColor: Color(0xFF1C1C1E),
@@ -871,9 +1026,11 @@ class ChangePasswordPage extends StatefulWidget {
 
 class _ChangePasswordPageState extends State<ChangePasswordPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _currentPasswordController = TextEditingController();
+  final TextEditingController _currentPasswordController =
+      TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   bool _isLoading = false;
   bool _obscureCurrent = true;
   bool _obscureNew = true;
@@ -887,14 +1044,14 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('auth_token');
-      
+
       if (token == null) {
         setState(() => _isLoading = false);
         return;
       }
 
       final response = await http.post(
-        Uri.parse('http://192.168.1.115:8000/prof/api/user/change-password/'),
+        Uri.parse('https://qopera.app/prof/api/user/change-password/'),
         headers: {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
@@ -907,12 +1064,18 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
 
       if (response.statusCode == 200) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password changed successfully'), backgroundColor: Colors.green),
+          const SnackBar(
+            content: Text('Password changed successfully'),
+            backgroundColor: Colors.green,
+          ),
         );
         Navigator.pop(context);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: ${response.statusCode}'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Error: ${response.statusCode}'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } catch (e) {
@@ -929,7 +1092,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Change Password', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Change Password',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.black,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -955,8 +1121,12 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     borderSide: BorderSide.none,
                   ),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscureCurrent ? Icons.visibility : Icons.visibility_off, color: Colors.grey),
-                    onPressed: () => setState(() => _obscureCurrent = !_obscureCurrent),
+                    icon: Icon(
+                      _obscureCurrent ? Icons.visibility : Icons.visibility_off,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscureCurrent = !_obscureCurrent),
                   ),
                 ),
                 validator: (value) {
@@ -967,7 +1137,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 },
               ),
               const SizedBox(height: 16),
-              
+
               // New Password
               TextFormField(
                 controller: _newPasswordController,
@@ -983,7 +1153,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     borderSide: BorderSide.none,
                   ),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscureNew ? Icons.visibility : Icons.visibility_off, color: Colors.grey),
+                    icon: Icon(
+                      _obscureNew ? Icons.visibility : Icons.visibility_off,
+                      color: Colors.grey,
+                    ),
                     onPressed: () => setState(() => _obscureNew = !_obscureNew),
                   ),
                 ),
@@ -998,7 +1171,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 },
               ),
               const SizedBox(height: 16),
-              
+
               // Confirm Password
               TextFormField(
                 controller: _confirmPasswordController,
@@ -1014,8 +1187,12 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                     borderSide: BorderSide.none,
                   ),
                   suffixIcon: IconButton(
-                    icon: Icon(_obscureConfirm ? Icons.visibility : Icons.visibility_off, color: Colors.grey),
-                    onPressed: () => setState(() => _obscureConfirm = !_obscureConfirm),
+                    icon: Icon(
+                      _obscureConfirm ? Icons.visibility : Icons.visibility_off,
+                      color: Colors.grey,
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscureConfirm = !_obscureConfirm),
                   ),
                 ),
                 validator: (value) {
@@ -1029,7 +1206,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                 },
               ),
               const SizedBox(height: 30),
-              
+
               // Update Button
               SizedBox(
                 width: double.infinity,
@@ -1044,7 +1221,10 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
                   ),
                   child: _isLoading
                       ? const CircularProgressIndicator(color: Colors.white)
-                      : const Text('Update Password', style: TextStyle(fontSize: 16)),
+                      : const Text(
+                          'Update Password',
+                          style: TextStyle(fontSize: 16),
+                        ),
                 ),
               ),
             ],
@@ -1072,13 +1252,19 @@ class EmailSettingsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Email Settings', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Email Settings',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.black,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: const Center(
-        child: Text('Email Settings Page', style: TextStyle(color: Colors.white)),
+        child: Text(
+          'Email Settings Page',
+          style: TextStyle(color: Colors.white),
+        ),
       ),
     );
   }
@@ -1126,7 +1312,10 @@ class NotificationSettingsPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Notifications', style: TextStyle(color: Colors.white)),
+        title: const Text(
+          'Notifications',
+          style: TextStyle(color: Colors.white),
+        ),
         backgroundColor: Colors.black,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
@@ -1136,19 +1325,28 @@ class NotificationSettingsPage extends StatelessWidget {
         child: Column(
           children: [
             SwitchListTile(
-              title: const Text('Push Notifications', style: TextStyle(color: Colors.white)),
+              title: const Text(
+                'Push Notifications',
+                style: TextStyle(color: Colors.white),
+              ),
               value: true,
               onChanged: (value) {},
               activeColor: Colors.blue,
             ),
             SwitchListTile(
-              title: const Text('Email Notifications', style: TextStyle(color: Colors.white)),
+              title: const Text(
+                'Email Notifications',
+                style: TextStyle(color: Colors.white),
+              ),
               value: true,
               onChanged: (value) {},
               activeColor: Colors.blue,
             ),
             SwitchListTile(
-              title: const Text('Order Updates', style: TextStyle(color: Colors.white)),
+              title: const Text(
+                'Order Updates',
+                style: TextStyle(color: Colors.white),
+              ),
               value: false,
               onChanged: (value) {},
               activeColor: Colors.blue,
@@ -1183,14 +1381,16 @@ class ThemeSettingsPagex extends StatelessWidget {
             title: const Text('Light', style: TextStyle(color: Colors.white)),
           ),
           ListTile(
-            title: const Text('System Default', style: TextStyle(color: Colors.white)),
+            title: const Text(
+              'System Default',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
     );
   }
 }
-
 
 class HelpPage extends StatelessWidget {
   const HelpPage({super.key});
@@ -1202,7 +1402,7 @@ class HelpPage extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title:  Text(context.tr.helpSupport),
+        title: Text(context.tr.helpSupport),
         elevation: 0,
         iconTheme: IconThemeData(color: theme.textTheme.titleMedium?.color),
       ),
@@ -1222,8 +1422,11 @@ class HelpPage extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.support_agent,
-                        color: theme.primaryColor, size: 24),
+                    Icon(
+                      Icons.support_agent,
+                      color: theme.primaryColor,
+                      size: 24,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       context.tr.howCanWeHelpYou,
@@ -1249,11 +1452,11 @@ class HelpPage extends StatelessWidget {
           const SizedBox(height: 8),
 
           _FaqItem(
-            question:context.tr.faqHowDoIScanAMenu,
+            question: context.tr.faqHowDoIScanAMenu,
             answer: context.tr.faqHowDoIScanAMenuAnswer,
           ),
           _FaqItem(
-            question: context.tr.faqDoINeedAccount ,
+            question: context.tr.faqDoINeedAccount,
             answer: context.tr.faqDoINeedAccountAnswer,
           ),
           _FaqItem(
@@ -1261,65 +1464,71 @@ class HelpPage extends StatelessWidget {
             answer: context.tr.faqWhyNoMenuLoadingAnswer,
           ),
           _FaqItem(
-            question:context.tr.faqSaveFavorite,
-            answer:context.tr.faqSaveFavoriteAnswer,
+            question: context.tr.faqSaveFavorite,
+            answer: context.tr.faqSaveFavoriteAnswer,
           ),
           _FaqItem(
             question: context.tr.faqIsDataSafe,
-            answer:context.tr.faqIsDataSafeAnswer,
+            answer: context.tr.faqIsDataSafeAnswer,
           ),
 
           const SizedBox(height: 24),
 
           // ---------- Section: Contact ----------
-          _SectionHeader(title:context.tr.contactSupport),
+          _SectionHeader(title: context.tr.contactSupport),
           const SizedBox(height: 8),
 
           _HelpTile(
             icon: Icons.mail_outline,
-            title: context.tr.emailSupport ,
-            subtitle: context.tr.emailSupportSubtitle ,
-            onTap:  () async {
-                final Uri emailUri = Uri(
-                  scheme: 'mailto',
-                  path: 'support@example.com',
-                );
+            title: context.tr.emailSupport,
+            subtitle: context.tr.emailSupportSubtitle,
+            onTap: () async {
+              final Uri emailUri = Uri(
+                scheme: 'mailto',
+                path: 'support@example.com',
+              );
 
-                if (await canLaunchUrl(emailUri)) {
-                  await launchUrl(emailUri);
-                } else {
-                  // Fallback: show a snackbar or copy to clipboard
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Could not open email app')),
-                    );
-                  }
+              if (await canLaunchUrl(emailUri)) {
+                await launchUrl(emailUri);
+              } else {
+                // Fallback: show a snackbar or copy to clipboard
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Could not open email app')),
+                  );
                 }
-              },
+              }
+            },
           ),
           _HelpTile(
             icon: Icons.bug_report_outlined,
-            title:context.tr.reportProblem,
+            title: context.tr.reportProblem,
             subtitle: context.tr.reportProblemSubtitle,
             onTap: () {
               // TODO: navigate to feedback page
-               Navigator.push(context, MaterialPageRoute(builder: (context) => FeedbackPage()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => FeedbackPage()),
+              );
             },
           ),
           _HelpTile(
             icon: Icons.lightbulb_outline,
-            title: context.tr.suggestFeature ,
-            subtitle: context.tr.suggestFeatureSubtitle ,
+            title: context.tr.suggestFeature,
+            subtitle: context.tr.suggestFeatureSubtitle,
             onTap: () {
               // TODO: navigate to feedback page
-              Navigator.push(context, MaterialPageRoute(builder: (context) => FeedbackPage()));
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => FeedbackPage()),
+              );
             },
           ),
           _HelpTile(
             icon: Icons.star_outline,
             title: context.tr.rateApp,
-            subtitle:context.tr.rateAppSubtitle , 
-           onTap: () async {
+            subtitle: context.tr.rateAppSubtitle,
+            onTap: () async {
               final Uri storeUri = Uri.parse(
                 'https://play.google.com/store/apps/details?id=com.example.yourapp',
               );
@@ -1341,7 +1550,6 @@ class HelpPage extends StatelessWidget {
           // ---------- Footer ----------
           Center(
             child: Text(
-              
               'MenuScan v1.0.0  •  Made with MenuScan',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
@@ -1365,10 +1573,10 @@ class _SectionHeader extends StatelessWidget {
     return Text(
       title,
       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-            letterSpacing: 0.4,
-          ),
+        fontWeight: FontWeight.w700,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
+        letterSpacing: 0.4,
+      ),
     );
   }
 }
@@ -1436,12 +1644,9 @@ class _HelpTile extends StatelessWidget {
       elevation: 0,
       margin: const EdgeInsets.only(bottom: 8),
       color: theme.cardColor,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
         leading: CircleAvatar(
           backgroundColor: theme.primaryColor.withOpacity(0.15),
           child: Icon(icon, color: theme.primaryColor, size: 20),
@@ -1479,42 +1684,49 @@ class FeedbackPage extends StatefulWidget {
 class _FeedbackPageState extends State<FeedbackPage> {
   final TextEditingController _feedbackController = TextEditingController();
 
-  // post http://192.168.1.115:8000/prof/api/send-feedback
- void sendFeedback(String message) async {
+  // post https://qopera.app/prof/api/send-feedback
+  void sendFeedback(String message) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
 
     // if (token == null) return;
-     final headers = {
-          'Content-Type': 'application/json',
-          if (token != null) 'Authorization': 'Token $token',
-        };
+    final headers = {
+      'Content-Type': 'application/json',
+      if (token != null) 'Authorization': 'Token $token',
+    };
     final response = await http.post(
-      Uri.parse('http://192.168.1.115:8000/prof/api/send-feedback'),
-      
+      Uri.parse('https://qopera.app/prof/api/send-feedback'),
+
       headers: headers,
       body: jsonEncode({'message': message}),
     );
     print('Feedback response: ${response.statusCode} - ${response.body}');
     if (response.statusCode == 200) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(context.tr.feedbackSentThanks), backgroundColor: Colors.green),
+        SnackBar(
+          content: Text(context.tr.feedbackSentThanks),
+          backgroundColor: Colors.green,
+        ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-         SnackBar(content: Text(context.tr.failedToSendFeedback), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text(context.tr.failedToSendFeedback),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
- 
- String? _token='';
+
+  String? _token = '';
 
   @override
   void initState() {
     super.initState();
     getToken();
   }
- void getToken() async {
+
+  void getToken() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
     setState(() {
@@ -1523,73 +1735,85 @@ class _FeedbackPageState extends State<FeedbackPage> {
     });
     print('Token: $token');
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title:  Text(context.tr.sendFeedback),
+        title: Text(context.tr.sendFeedback),
         backgroundColor: Theme.of(context).cardColor,
         elevation: 0,
-        iconTheme:  IconThemeData(color: Theme.of(context).textTheme.titleMedium?.color),
+        iconTheme: IconThemeData(
+          color: Theme.of(context).textTheme.titleMedium?.color,
+        ),
       ),
-      body:  SingleChildScrollView(
+      body: SingleChildScrollView(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
-               Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Theme.of(context).primaryColor.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(
-                  color: Theme.of(context).primaryColor.withOpacity(0.25),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: Theme.of(context).primaryColor.withOpacity(0.25),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.lightbulb_outline,
+                          color: Theme.of(context).primaryColor,
+                          size: 22,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          context.tr.helpUsImprove,
+
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(fontWeight: FontWeight.w700),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      context.tr.yourFeedbackShapes,
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodyMedium?.copyWith(height: 1.5),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      context.tr.greatReportIncludes,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    _TipLine(text: context.tr.tipWhatYouWereDoing),
+                    _TipLine(text: context.tr.tipWhatYouExpected),
+                    _TipLine(text: context.tr.tipWhatActuallyHappened),
+                    _TipLine(text: context.tr.tipIdeasForImproving),
+                  ],
                 ),
               ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.lightbulb_outline,
-                          color: Theme.of(context).primaryColor, size: 22),
-                      const SizedBox(width: 8),
-                      Text(context.tr.helpUsImprove,
-                       
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  Text(context.tr.yourFeedbackShapes,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(height: 1.5),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(context.tr.greatReportIncludes,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  _TipLine(text: context.tr.tipWhatYouWereDoing),
-                  _TipLine(text:context.tr.tipWhatYouExpected ),
-                  _TipLine(text:context.tr.tipWhatActuallyHappened ),
-                  _TipLine(text:context.tr.tipIdeasForImproving ),
-                ],
-              ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 20),
 
               TextField(
                 controller: _feedbackController,
-                style:  TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                ),
                 maxLines: 10,
-                decoration:  InputDecoration(
-                  hintText: context.tr.shareYourFeedback ,
+                decoration: InputDecoration(
+                  hintText: context.tr.shareYourFeedback,
                   hintStyle: TextStyle(color: Colors.grey),
                   filled: true,
                   fillColor: Theme.of(context).cardColor,
@@ -1603,40 +1827,65 @@ class _FeedbackPageState extends State<FeedbackPage> {
               SizedBox(
                 width: double.infinity,
                 height: 50,
-                child: _token!=null && _token!.isNotEmpty? ElevatedButton(
-                  onPressed: () {
-                    final message = _feedbackController.text.trim();
-                    if (message.isNotEmpty) {
-                      sendFeedback(message);
-                      _feedbackController.clear();
-                        Navigator.pop(context);
-                    } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                         SnackBar(content: Text(context.tr.pleaseEnterFeedback), backgroundColor: Colors.red),
-                      );
-                    }
-                  
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child:  Text(context.tr.submitFeedback, style: TextStyle(fontSize: 16,color: Theme.of(context).textTheme.bodyMedium?.color)),
-                ): ElevatedButton(
-                  onPressed: () {
-                    // Navigate to login page
-                    Navigator.push(context, MaterialPageRoute(builder: (context) => LoginScreen()));
-                  },
-                   style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  child:  Text(context.tr.loginToSendFeedback, style: TextStyle(fontSize: 16,color:Theme.of(context).textTheme.bodyMedium?.color)),
-                ),
+                child: _token != null && _token!.isNotEmpty
+                    ? ElevatedButton(
+                        onPressed: () {
+                          final message = _feedbackController.text.trim();
+                          if (message.isNotEmpty) {
+                            sendFeedback(message);
+                            _feedbackController.clear();
+                            Navigator.pop(context);
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(context.tr.pleaseEnterFeedback),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).primaryColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          context.tr.submitFeedback,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.color,
+                          ),
+                        ),
+                      )
+                    : ElevatedButton(
+                        onPressed: () {
+                          // Navigate to login page
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => LoginScreen(),
+                            ),
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).primaryColor,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: Text(
+                          context.tr.loginToSendFeedback,
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.color,
+                          ),
+                        ),
+                      ),
               ),
             ],
           ),
@@ -1651,6 +1900,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
     super.dispose();
   }
 }
+
 // Small bullet helper
 class _TipLine extends StatelessWidget {
   final String text;
@@ -1676,10 +1926,7 @@ class _TipLine extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(
-              text,
-              style: TextStyle(color: color, height: 1.4),
-            ),
+            child: Text(text, style: TextStyle(color: color, height: 1.4)),
           ),
         ],
       ),
@@ -1708,13 +1955,14 @@ class AboutPagex extends StatelessWidget {
             const SizedBox(height: 16),
             const Text(
               'Ballon',
-              style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.white),
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Version 1.0.0',
-              style: TextStyle(color: Colors.grey),
-            ),
+            const Text('Version 1.0.0', style: TextStyle(color: Colors.grey)),
             const SizedBox(height: 8),
             const Text(
               'Food Delivery App',

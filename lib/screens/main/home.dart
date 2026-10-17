@@ -1,156 +1,341 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:ballon/core/handle_error/execptions.dart';
 import 'package:ballon/models/bussinesstype.dart';
 import 'package:ballon/models/resturants.dart';
 import 'package:ballon/pagination/data/data_source/urls.dart';
 import 'package:ballon/qr_scanner_screen.dart';
-import 'package:ballon/screens.dart';
+import 'package:ballon/screens/sub/business.dart';
+import 'package:ballon/screens/sub/loading.dart';
+import 'package:ballon/screens/sub/screens.dart';
+import 'package:ballon/screens/sub/shimerwidget.dart';
 import 'package:ballon/services/geolocation.dart';
 import 'package:ballon/shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:ballon/l10n/app_strings.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 
-class ApiService {
-  Future<List<Result>> fetchRestaurantsByDistance(int pageNumber) async {
-    try {
-      LocationService locationService = LocationService();
-      Position currentPosition = await locationService.getCurrentLocation();
-      String url = "${Urls.baseUrl}/prof/restaurants-high-rated/?lat=${currentPosition.latitude}&lon=${currentPosition.longitude}&sort_by=distance&page=$pageNumber";
-      final response = await http.get(Uri.parse(url));
-      print(url);
-      if (response.statusCode == 200) {
-        var map = jsonDecode(utf8.decode(response.bodyBytes));
-        return Resturants.fromJson(map).data!.results!;
-      } else {
-        throw ServerException(message: "Error: ${response.statusCode}");
-      }
-    } catch (e) {
-      throw ServerException(message: e.toString());
-    }
+class CategoryModel {
+  final int id;
+  final String name;
+  final String? description;
+  final String? timestamp;
+  final int count;
+  final String color;
+  final String textColor;
+  final String? icon;
+  final String? cover;
+
+  CategoryModel({
+    required this.id,
+    required this.name,
+    this.description,
+    this.timestamp,
+    this.count = 0,
+    this.color = '#000000',
+    this.textColor = '#000000',
+    this.icon,
+    this.cover,
+  });
+
+  factory CategoryModel.fromJson(Map<String, dynamic> json) {
+    return CategoryModel(
+      id: _parseInt(json['id']) ?? 0,
+      name: json['name']?.toString() ?? 'Unknown',
+      description: json['description']?.toString(),
+      timestamp: json['timestamp']?.toString(),
+      count: _parseInt(json['count']) ?? 0,
+      color: json['color']?.toString() ?? '#000000',
+      textColor: json['text_color']?.toString() ?? '#000000',
+      icon: json['icon']?.toString(),
+      cover: json['cover']?.toString(),
+    );
   }
 
-  Future<List<Result>> fetchRestaurantsByReviews(int pageNumber) async {
-    try {
-      String url = "${Urls.baseUrl}/prof/restaurants-high-rated/?sort_by=reviews&page=$pageNumber";
-      final response = await http.get(Uri.parse(url));
-      print(url);
-      if (response.statusCode == 200) {
-        var map = jsonDecode(utf8.decode(response.bodyBytes));
-        return Resturants.fromJson(map).data!.results!;
-      } else {
-        throw ServerException(message: "Error: ${response.statusCode}");
-      }
-    } catch (e) {
-      throw ServerException(message: e.toString());
+  // ---------------------------------------------------------------------------
+  // Helpers
+  // ---------------------------------------------------------------------------
+
+  /// Converts the stored hex string (e.g. "#FF9800") to a Flutter Color.
+  /// Returns null if the string is invalid.
+  int? get colorValue => _hexToInt(color);
+  int? get textColorValue => _hexToInt(textColor);
+
+  /// A friendly count string like "523+ businesses"
+  // String get countLabel => '$count+ ${context.tr.}';
+
+  // ---------------------------------------------------------------------------
+  // Private parsing utilities
+  // ---------------------------------------------------------------------------
+
+  static int? _parseInt(dynamic value) {
+    if (value == null) return null;
+    if (value is int) return value;
+    if (value is double) return value.toInt();
+    if (value is num) return value.toInt();
+    if (value is String) {
+      final cleaned = value.replaceAll(RegExp(r'[^0-9-]'), '');
+      if (cleaned.isEmpty) return null;
+      return int.tryParse(cleaned);
     }
+    return null;
   }
 
-  // NEW: Fetch restaurants by category
-  Future<List<Result>> fetchRestaurantsByCategory(int pageNumber, int categoryId) async {
-    try {
-      // Check if we need location for distance sorting
-      String url;
-      if (_currentSort == 'distance') {
-        LocationService locationService = LocationService();
-        Position currentPosition = await locationService.getCurrentLocation();
-        url = "${Urls.baseUrl}/prof/restaurants-high-rated/?type_business=$categoryId&lat=${currentPosition.latitude}&lon=${currentPosition.longitude}&sort_by=distance&page=$pageNumber";
-      } else {
-        url = "${Urls.baseUrl}/prof/restaurants-high-rated/?type_business=$categoryId&sort_by=reviews&page=$pageNumber";
-      }
-      
-      final response = await http.get(Uri.parse(url));
-      print("🔄 Fetching category restaurants: $url");
-      
-      if (response.statusCode == 200) {
-        var map = jsonDecode(utf8.decode(response.bodyBytes));
-        return Resturants.fromJson(map).data!.results!;
-      } else {
-        throw ServerException(message: "Error: ${response.statusCode}");
-      }
-    } catch (e) {
-      throw ServerException(message: e.toString());
-    }
+  /// Parses "#RRGGBB" or "#AARRGGBB" into a 32-bit int for Color().
+  static int? _hexToInt(String? hex) {
+    if (hex == null || hex.isEmpty) return null;
+    var value = hex.replaceAll('#', '').trim();
+    if (value.length == 6) value = 'FF$value'; // Add full opacity
+    if (value.length != 8) return null;
+    return int.tryParse(value, radix: 16);
   }
 
-  // Add this to track current sort
-  String _currentSort = 'reviews';
+  IconData get iconData {
+    final lower = name.toLowerCase();
+
+    if (lower.contains('restaurant') ||
+        lower.contains('café') ||
+        lower.contains('cafe')) {
+      return Icons.restaurant;
+    }
+    if (lower.contains('shop') || lower.contains('supermarket')) {
+      return Icons.shopping_cart;
+    }
+    if (lower.contains('book') || lower.contains('stationery')) {
+      return Icons.menu_book;
+    }
+    if (lower.contains('electronic') || lower.contains('gadget')) {
+      return Icons.devices;
+    }
+    if (lower.contains('health') || lower.contains('pharmacy')) {
+      return Icons.local_hospital;
+    }
+    if (lower.contains('beauty') || lower.contains('care')) {
+      return Icons.spa;
+    }
+    if (lower.contains('education') || lower.contains('training')) {
+      return Icons.school;
+    }
+    if (lower.contains('service')) {
+      return Icons.build;
+    }
+    // ----- New 12 -----
+    if (lower.contains('hotel') ||
+        lower.contains('accommodation') ||
+        lower.contains('lodging')) {
+      return Icons.hotel;
+    }
+    if (lower.contains('automotive') ||
+        lower.contains('transport') ||
+        lower.contains('vehicle')) {
+      return Icons.directions_car;
+    }
+    if (lower.contains('real estate') || lower.contains('property')) {
+      return Icons.home_work;
+    }
+    if (lower.contains('fashion') ||
+        lower.contains('clothing') ||
+        lower.contains('apparel')) {
+      return Icons.checkroom;
+    }
+    if (lower.contains('sport') ||
+        lower.contains('fitness') ||
+        lower.contains('gym')) {
+      return Icons.fitness_center;
+    }
+    if (lower.contains('entertainment') ||
+        lower.contains('event') ||
+        lower.contains('cinema')) {
+      return Icons.movie;
+    }
+    if (lower.contains('travel') ||
+        lower.contains('tourism') ||
+        lower.contains('flight')) {
+      return Icons.flight;
+    }
+    if (lower.contains('pet') ||
+        lower.contains('veterinary') ||
+        lower.contains('animal')) {
+      return Icons.pets;
+    }
+    if (lower.contains('garden') || lower.contains('home &')) {
+      return Icons.yard;
+    }
+    if (lower.contains('financial') ||
+        lower.contains('bank') ||
+        lower.contains('finance')) {
+      return Icons.account_balance;
+    }
+    if (lower.contains('technology') ||
+        lower.contains('it ') ||
+        lower.contains('software') ||
+        lower.contains('computer')) {
+      return Icons.computer;
+    }
+    if (lower.contains('art') ||
+        lower.contains('culture') ||
+        lower.contains('museum')) {
+      return Icons.palette;
+    }
+// 'Bars, Lounges & Liquor',  'nightlife',
+    if (lower.contains('bar')||
+         lower.contains('lounges')||
+         lower.contains('liquor')){
+      return Icons.nightlife;
+         }
+    return Icons.category;
+  }
+  //  IconData get iconData => _iconFromString(icon);
+  //  static IconData _iconFromString(String? name) {
+  //   switch (name) {
+  //     case 'restaurant':
+  //       return Icons.restaurant;
+  //     case 'shopping_cart':
+  //       return Icons.shopping_cart;
+  //     case 'menu_book':
+  //       return Icons.menu_book;
+  //     case 'devices':
+  //       return Icons.devices;
+  //     case 'local_hospital':
+  //       return Icons.local_hospital;
+  //     case 'spa':
+  //       return Icons.spa;
+  //     case 'school':
+  //       return Icons.school;
+  //     case 'build':
+  //       return Icons.build;
+  //     default:
+  //       return Icons.category;
+  //   }
+  // }
 }
 
-class RestaurantHomePage extends StatefulWidget {
-  const RestaurantHomePage({super.key});
+class HomePages extends StatefulWidget {
+  const HomePages({super.key});
 
   @override
-  State<RestaurantHomePage> createState() => _RestaurantHomePageState();
+  State<HomePages> createState() => _HomePagesState();
 }
 
-class _RestaurantHomePageState extends State<RestaurantHomePage> {
-  final ApiService _apiService = ApiService();
-  final TextEditingController _searchController = TextEditingController();
-  
+class _HomePagesState extends State<HomePages> {
+  int _currentIndex = 0;
+  // 1. Add the PageController and Timer variables
+  final PageController _promoPageController = PageController();
+  Timer? _promoTimer;
+  int _currentPromoPage = 0;
   List<Result> _allRestaurants = [];
   List<Result> _displayedRestaurants = [];
-  
+  bool is_view = false;
   bool _isLoading = true;
   String? _errorMessage;
   int _currentPage = 1;
   String _currentSort = 'reviews';
-  
+
   // Category related
   int selectedCategoryId = 0; // 0 means "All" or no filter
   int selectedIndex = 0;
   List<CategoryModel> categories = [];
   bool isLoadingCategories = true;
   String? errorMessageCategories;
-  
+  StreamSubscription<InternetConnectionStatus>? _connectionSubscription;
   final ScrollController _scrollController = ScrollController();
-
+  InternetConnectionStatus? _lastConnectionStatus;
+  // ===== SLIDER =====
+  final PageController _pageController = PageController(viewportFraction: 0.9);
+  // 2. Setup the timer when the widget initializes
   @override
   void initState() {
     super.initState();
-    _loadRestaurants();
+    _startPromoTimer();
     fetchCategories();
-    _scrollController.addListener(_onScroll);
-    _searchController.addListener(_filterRestaurants);
+
+    _connectionSubscription = InternetConnectionChecker.instance.onStatusChange
+        .listen((status) {
+          if (_lastConnectionStatus == InternetConnectionStatus.disconnected &&
+              status == InternetConnectionStatus.connected) {
+            fetchCategories();
+          }
+
+          _lastConnectionStatus = status;
+        });
   }
 
+  void _startPromoTimer() {
+    _promoTimer = Timer.periodic(const Duration(seconds: 4), (timer) {
+      if (_promoPageController.hasClients) {
+        // If it's the last page, go back to the first page
+        if (_currentPromoPage == 2) {
+          // Assuming 3 banners (0, 1, 2)
+          _promoPageController.animateToPage(
+            0,
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
+        } else {
+          // Otherwise, go to the next page
+          _promoPageController.nextPage(
+            duration: const Duration(milliseconds: 500),
+            curve: Curves.easeInOut,
+          );
+        }
+      }
+    });
+  }
+
+  // 3. Clean up the timer when the widget is disposed
+  @override
+  void dispose() {
+    _promoTimer?.cancel();
+    _promoPageController.dispose();
+    super.dispose();
+  }
+
+  // ... rest of your build method
   Future<void> fetchCategories() async {
     // For Android emulator, use 10.0.2.2
     // For physical device, use your computer's IP
-    const String apiUrl = 'http://192.168.1.115:8000/prof/api/typemodel/';
+    const String apiUrl = 'https://qopera.app/prof/api/typemodel/';
     // const String apiUrl = 'http://10.0.2.2:8000/prof/api/typemodel/';
-    
+
     try {
       setState(() {
         isLoadingCategories = true;
         errorMessageCategories = null;
       });
-      
+
       print("🔄 Fetching categories from: $apiUrl");
-      
-      final response = await http.get(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      ).timeout(const Duration(seconds: 10));
-      
+
+      final response = await http
+          .get(
+            Uri.parse(apiUrl),
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+            },
+          )
+          .timeout(const Duration(seconds: 10));
+
       print("📡 Status Code: ${response.statusCode}");
-      
+
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         print("✅ Found ${data.length} categories");
-        
+
         // Add "All" category at the beginning
         final List<CategoryModel> parsedCategories = [
-          CategoryModel(id: 0, name: 'All'), // Special "All" category
-          ...data.map((json) => CategoryModel.fromJson(json as Map<String, dynamic>)),
+          // CategoryModel(id: 0, name: 'All'), // Special "All" category
+          ...data.map(
+            (json) => CategoryModel.fromJson(json as Map<String, dynamic>),
+          ),
         ];
-        
-        print("📋 Categories: ${parsedCategories.map((c) => '${c.name}(${c.id})').join(', ')}");
-        
+
+        print(
+          "📋 Categories: ${parsedCategories.map((c) => '${c.name}(${c.id})').join(', ')}",
+        );
+
         setState(() {
           categories = parsedCategories;
           isLoadingCategories = false;
@@ -159,576 +344,639 @@ class _RestaurantHomePageState extends State<RestaurantHomePage> {
       } else {
         setState(() {
           errorMessageCategories = "Server error: ${response.statusCode}";
-          isLoadingCategories = false;
+          isLoadingCategories = true;
         });
       }
     } catch (e) {
       print("❌ Error fetching categories: $e");
       setState(() {
         errorMessageCategories = "Error: $e";
-        isLoadingCategories = false;
+        isLoadingCategories = true;
       });
     }
   }
 
-  Future<void> _loadRestaurants() async {
-    setState(() { 
-      _isLoading = true; 
-      _errorMessage = null; 
-    });
-
-    try {
-      List<Result> fetchedData;
-      
-      // Check if we're filtering by category
-      if (selectedCategoryId != 0) {
-        // Fetch by category
-        fetchedData = await _fetchRestaurantsByCategory();
-      } else {
-        // Fetch all restaurants
-        if (_currentSort == 'distance') {
-          fetchedData = await _apiService.fetchRestaurantsByDistance(_currentPage);
-        } else {
-          fetchedData = await _apiService.fetchRestaurantsByReviews(_currentPage);
-        }
-      }
-
-      setState(() {
-        if (_currentPage == 1) {
-          _allRestaurants = fetchedData;
-        } else {
-          _allRestaurants.addAll(fetchedData);
-        }
-        _filterRestaurants();
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() { 
-        _errorMessage = e.toString(); 
-        _isLoading = false; 
-      });
-    }
+  Color _hexToColor(String hex) {
+    hex = hex.replaceFirst('#', '');
+    if (hex.length == 6) hex = 'FF$hex';
+    return Color(int.parse(hex, radix: 16));
   }
 
-  // NEW: Fetch restaurants by category
-  Future<List<Result>> _fetchRestaurantsByCategory() async {
-    try {
-      String url;
-      LocationService locationService = LocationService();
-      
-      if (_currentSort == 'distance') {
-        Position currentPosition = await locationService.getCurrentLocation();
-        url = "${Urls.baseUrl}/prof/restaurants-high-rated/?type_business=$selectedCategoryId&lat=${currentPosition.latitude}&lon=${currentPosition.longitude}&sort_by=distance&page=$_currentPage";
-      } else {
-        url = "${Urls.baseUrl}/prof/restaurants-high-rated/?type_business=$selectedCategoryId&sort_by=reviews&page=$_currentPage";
-      }
-      
-      print("🔄 Fetching category restaurants: $url");
-      final response = await http.get(Uri.parse(url));
-      
-      if (response.statusCode == 200) {
-        var map = jsonDecode(utf8.decode(response.bodyBytes));
-        return Resturants.fromJson(map).data!.results!;
-      } else {
-        throw ServerException(message: "Error: ${response.statusCode}");
-      }
-    } catch (e) {
-      throw ServerException(message: e.toString());
-    }
-  }
+  @override
+  Widget build(BuildContext context) {
+    final _promoData = [
+      {
+        'title1': context.tr.promoTitle1Line1,
+        'title2': context.tr.promoTitle1Line2,
+        'desc': context.tr.promoDesc1,
+        'img': 'assets/img/everythings.png',
+        'color': '#16A34A', // green
+      },
+      {
+        'title1': context.tr.promoTitle2Line1,
+        'title2': context.tr.promoTitle2Line2,
+        'desc': context.tr.promoDesc2,
+        'img': 'assets/img/shop.png',
+        'color': '#1D6FE8', // blue
+      },
+      {
+        'title1': context.tr.promoTitle3Line1,
+        'title2': context.tr.promoTitle3Line2,
+        'desc': context.tr.promoDesc3,
+        'img': 'assets/img/more.png',
+        'color': '#ec9c11', // amber
+      },
+    ];
+    return Scaffold(
+      // backgroundColor: Theme.of(context).,
+      // appBar: _buildAppBar(),
+      body: SingleChildScrollView(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const SizedBox(height: 10),
 
-  void _filterRestaurants() {
-    String query = _searchController.text.toLowerCase();
-    setState(() {
-      if (query.isEmpty) {
-        _displayedRestaurants = _allRestaurants;
-      } else {
-        _displayedRestaurants = _allRestaurants.where((r) {
-          return (r.name?.toLowerCase().contains(query) ?? false) ||
-                 (r.place?.toLowerCase().contains(query) ?? false);
-        }).toList();
-      }
-    });
-  }
-
-  // NEW: Handle category selection
-  void _selectCategory(int index, int categoryId) {
-    setState(() {
-      selectedIndex = index;
-      selectedCategoryId = categoryId;
-      _currentPage = 1;
-      _allRestaurants = [];
-      _displayedRestaurants = [];
-    });
-    _loadRestaurants();
-  }
-
-  Future<void> _refresh() async {
-    _currentPage = 1;
-    await _loadRestaurants();
-  }
-
-  void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
-      if (!_isLoading) {
-        _currentPage++;
-        _loadRestaurants();
-      }
-    }
-  }
-
-  void _changeSort(String? newSort) {
-    if (newSort != null && newSort != _currentSort) {
-      setState(() {
-        _currentSort = newSort;
-        _currentPage = 1;
-        _allRestaurants = [];
-        _displayedRestaurants = [];
-      });
-      _loadRestaurants();
-    }
-  }
-
-  void _openQrScanner() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Theme.of(context).cardColor,
-      //  const Color(0xFF1C1C1E),
-      builder: (context) => Container(
-        height: 300,
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.qr_code_scanner, size: 80, color: Colors.blue),
-            const SizedBox(height: 20),
-             Text(context.tr.scanQrCode, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyMedium?.color)),
-            const SizedBox(height: 10),
-             Text("Integrate your mobile_scanner package here", style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color)),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("Close"),
-            )
-          ],
+              is_view ? SizedBox() : _buildPromoBanner(_promoData),
+              is_view ? SizedBox() : const SizedBox(height: 10),
+              is_view ? SizedBox() : _buildIndicators(_promoData), //
+              const SizedBox(height: 20),
+              _buildSearchBar(),
+              const SizedBox(height: 24),
+              _buildSectionHeader(),
+              const SizedBox(height: 16),
+              _buildBusinessGrid(),
+              const SizedBox(height: 20),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
+  // --- Widget Builders ---
+
+  AppBar _buildAppBar() {
+    return AppBar(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
-            // --- SEARCH BAR AND QR ICON ---
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
+      elevation: 0,
+      titleSpacing: 16,
+      title: Row(
+        children: [
+          // Custom Logo
+          Image.asset(
+            "assets/img/menuscan_logo.png",
+            fit: BoxFit.cover,
+            width: 43,
+            height: 43,
+            color: Theme.of(context).primaryColor,
+          ),
+          const SizedBox(width: 10),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Qopera',
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyMedium!.color!,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                'Scan • Discover • Access',
+                style: TextStyle(
+                  color: const Color.fromARGB(255, 151, 150, 150),
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      actions: [
+        IconButton(
+          icon: Icon(
+            Icons.menu,
+            color: Theme.of(context).textTheme.bodyMedium!.color!,
+          ),
+          onPressed: () {},
+        ),
+      ],
+    );
+  }
+
+  // Data for the banners (You can add your own images/text here)
+  // final List<Map<String, String>> _promoData = [
+  //   {
+  //     'title1': context.tr.promoTitle1Line1,
+  //     'title2': context.tr.promoTitle2Line1,
+  //     'desc': context.tr.promoDesc1,
+  //     'img': 'assets/img/everythings.png',
+  //   },
+  //   {
+  //     'title1': 'Shop Smart.',
+  //     'title2': 'Save Time.',
+  //     'desc': 'Find your favorite products\nand order them instantly.',
+  //     'img': 'assets/img/shop.png',
+  //   },
+  //   {
+  //     'title1': 'Explore More.',
+  //     'title2': 'Every Day.',
+  //     'desc': 'Discover new places and services\nright at your fingertips.',
+  //     'img': 'assets/img/more.png',
+  //   },
+  // ];
+
+  Widget _buildPromoBanner(List<Map<String, String>> _promoData) {
+    return SizedBox(
+      height: 180,
+      child: PageView.builder(
+        controller: _promoPageController,
+        itemCount: _promoData.length,
+        onPageChanged: (index) {
+          setState(() {
+            _currentPromoPage = index;
+          });
+        },
+        itemBuilder: (context, index) {
+          final promo = _promoData[index];
+          return Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(
+              horizontal: 4,
+            ), // Small margin between pages
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              image: DecorationImage(
+                image: AssetImage(promo['img']!),
+                fit: BoxFit.cover,
+              ),
+            ),
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                gradient: LinearGradient(
+                  colors: [
+                    _hexToColor(promo['color']!).withOpacity(0.9),
+                    Colors.transparent,
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+              ),
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(
-                    child: Container(
-                      height: 50,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(10),
+                  Text(
+                    promo['title1']!,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      height: 1.1,
+                    ),
+                  ),
+                  // Text(
+                  //   promo['title2']!,
+                  //   style: const TextStyle(
+                  //     color: Color(0xFF4DD0E1),
+                  //     fontSize: 24,
+                  //     fontWeight: FontWeight.bold,
+                  //     height: 1.1,
+                  //   ),
+                  // ),
+                  Stack(
+                    children: [
+                      // White outline
+                      Text(
+                        promo['title2']!,
+                        style: TextStyle(
+                          foreground: Paint()
+                            ..style = PaintingStyle.stroke
+                            ..strokeWidth = 3
+                            ..color = Colors.white,
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          height: 1.1,
+                        ),
                       ),
-                      child: Row(
+
+                      // Main text color
+                      Text(
+                        promo['title2']!,
+                        style: TextStyle(
+                          color: _hexToColor(promo['color']!),
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          height: 1.1,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: 10),
+                  Text(
+                    promo['desc']!,
+                    style: const TextStyle(
+                      color: Color.fromARGB(255, 255, 255, 255),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // Helper for the pagination dots (rebuilt dynamically based on the selected page)
+  Widget _buildIndicators(List<Map<String, String>> _promoData) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center, // Center the dots
+      children: List.generate(_promoData.length, (index) {
+        return _buildIndicator(index == _currentPromoPage);
+      }),
+    );
+  }
+
+  Widget _buildIndicator(bool isActive) {
+    return Container(
+      width: isActive ? 16 : 6,
+      height: 6,
+      margin: EdgeInsets.all(3),
+      decoration: BoxDecoration(
+        color: isActive
+            ? Theme.of(context).primaryColor
+            : Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(3),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: TextField(
+        decoration: InputDecoration(
+          hintText: context.tr.searchHint,
+          // 'Search businesses, products or services...',
+          hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
+          prefixIcon: const Icon(Icons.search, color: Colors.grey),
+          suffixIcon: Icon(Icons.tune, color: Theme.of(context).primaryColor),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(vertical: 15),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          context.tr.ourBusinessTitle,
+          style: TextStyle(
+            // color: T,
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            setState(() {
+              if (is_view == false) {
+                is_view = true;
+              } else {
+                is_view = false;
+              }
+            });
+          },
+          child: Row(
+            children: [
+              Text(
+                is_view ? context.tr.viewLess : context.tr.viewAll,
+                style: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                  fontSize: 14,
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: Theme.of(context).primaryColor,
+                size: 18,
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBusinessGrid() {
+    if (isLoadingCategories) {
+      return 
+      // Center(
+      //   child: IconSwapLoader(
+      //     size: 96,
+      //     icons: const [
+      //       Icons.shopping_cart_rounded,
+      //       Icons.local_cafe_rounded,
+      //       Icons.restaurant_rounded,
+      //       Icons.event_rounded,
+      //       Icons.chat_bubble_rounded,
+      //       Icons.local_hospital_rounded,
+      //       Icons.menu_book_sharp,
+      //       Icons.qr_code_outlined,
+      //     ],
+      //     interval: const Duration(milliseconds: 900),
+      //   ),
+      // );
+      // Inline in a screen
+      // Center(
+      //   child: SnakeHillLoader(
+      //     width: 260,
+      //     height: 130,
+      //     snakeColor: Theme.of(context).primaryColor,
+      //   ),
+      // );
+      //    Center(
+      //   child: WaterDropLoader(
+      //     size: 160,
+      //     dropColor: Theme.of(context).primaryColor,
+      //     iconColor: Colors.white,
+      //     duration: const Duration(milliseconds: 2600),
+      //   ),
+      // );
+       BusinessCardShimmerGrid(); // your shimmer widget
+    }
+  //   return GridView.builder(
+  //     shrinkWrap: true,
+  //     physics: const NeverScrollableScrollPhysics(),
+  //     itemCount: categories.length,
+  //     gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+  //       crossAxisCount: 2,
+  //       crossAxisSpacing: 12,
+  //       mainAxisSpacing: 12,
+  //       childAspectRatio: 0.85, // Adjusts height vs width ratio
+  //     ),
+  //     itemBuilder: (context, index) {
+  //       return _buildBusinessCard(categories[index]);
+  //     },
+  //   );
+  // }
+
+  return GridView.builder(
+  shrinkWrap: true,
+  physics: const NeverScrollableScrollPhysics(),
+  itemCount: categories.length,
+  padding: const EdgeInsets.symmetric(horizontal: 4),
+  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+    crossAxisCount: 3,
+    crossAxisSpacing: 10,
+    mainAxisSpacing: 11,
+    childAspectRatio: 1.05, // was 0.85 — matches the icon-led card
+  ),
+  itemBuilder: (context, index) {
+    return _buildBusinessCard(categories[index]);
+  },
+);}
+
+Widget _buildBusinessCard(CategoryModel category) {
+  // Accent color from the model (or a sensible fallback)
+  final accent = category.colorValue != null
+      ? Color(category.colorValue!)
+      : Theme.of(context).primaryColor;
+
+  return GestureDetector(
+    onTap: () {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => RestaurantsCafesScreen(category: category),
+        ),
+      );
+    },
+    child: Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(16),
+        // border: Border.all(
+        //   color: accent.withOpacity(0.28),
+        //   width: 1.2,
+        // ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.10),
+            blurRadius: 12,
+            offset: const Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(8),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ---- Icon hero ----
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    accent,
+                    Color.lerp(accent, Colors.black, 0.25) ?? accent,
+                  ],
+                ),
+                borderRadius: BorderRadius.circular(14),
+                // boxShadow: [
+                //   BoxShadow(
+                //     color: accent.withOpacity(0.35),
+                //     blurRadius: 10,
+                //     offset: const Offset(0, 4),
+                //   ),
+                // ],
+              ),
+              child: Icon(
+                category.iconData,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const Spacer(),
+
+            // ---- Name ----
+            Text(
+              category.name,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                height: 1.15,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
+              ),
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 6),
+
+            // ---- Count row ----
+            Row(
+              children: [
+                Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: accent,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    '${category.count} ${context.tr.businessesCount}',
+                    style: TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w500,
+                      color: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.color
+                          ?.withOpacity(0.75),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  size: 10,
+                  color: accent.withOpacity(0.7),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+  Widget _buildBusinessCardx(CategoryModel category) {
+    // Convert the hex color from the model into a Flutter Color
+    final iconColor = category.colorValue != null
+        ? Color(category.colorValue!)
+        : Colors.blue;
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => RestaurantsCafesScreen(category: category),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image Section
+            Expanded(
+              flex: 5,
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(12),
+                ),
+                child: category.cover != null && category.cover!.isNotEmpty
+                    ? Image.network(
+                        category.cover!,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) =>
+                            Container(color: Colors.grey),
+                      )
+                    : Container(color: Colors.grey),
+              ),
+            ),
+            // Details Section
+            Expanded(
+              flex: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: iconColor,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        category.iconData, // Uses the helper in CategoryModel
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.search, color: Colors.grey),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: TextField(
-                              controller: _searchController,
-                              style: const TextStyle(color: Colors.white),
-                              decoration: InputDecoration(
-                                hintText: context.tr.searchRestaurants,
-                                hintStyle: const TextStyle(color: Colors.grey, fontSize: 16),
-                                border: InputBorder.none,
-                              ),
+                          Text(
+                            category.name,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                              // color: Color(0xFF001F5B),
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${category.count}  ${context.tr.businessesCount}', // "523+ businesses"
+                            style: TextStyle(
+                              fontSize: 9,
+                              color: Colors.grey[600],
                             ),
                           ),
-                          if (_searchController.text.isNotEmpty)
-                            GestureDetector(
-                              onTap: () => _searchController.clear(),
-                              child: const Icon(Icons.close, color: Colors.grey, size: 20),
-                            ),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QrScannerScreen())),
-                    child: Container(
-                      height: 50,
-                      width: 50,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 28),
+                    Icon(
+                      Icons.chevron_right,
+                      size: 16,
+                      color: Theme.of(context).textTheme.bodyMedium!.color!,
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            
-            // --- CATEGORY LIST ---
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 10.0),
-              child: isLoadingCategories?
-                  // ? const Center(
-                  //     child: SizedBox(
-                  //       height: 40,
-                  //       child: Center(child: CircularProgressIndicator()),
-                  //     ),
-                  //   )
-                  Container(
-                        height: 70,
-                          child:  Shimmer.fromColors(
-                                      baseColor: Theme.of(context).cardColor,
-                                      highlightColor: Theme.of(context).cardColor.withOpacity(0.5),
-                                      enabled: true,
-                                      child: ListView.builder(
-                                          itemCount: 4,
-                                           physics: const NeverScrollableScrollPhysics(),
-                                          scrollDirection: Axis.horizontal,
-                                          itemBuilder: ((context, index) {
-                                            return Container(
-                                              margin: EdgeInsets.symmetric(
-                                                  horizontal: 5, vertical: 10),
-                                              height: 60,
-                                              width: 120,
-                                              decoration: BoxDecoration(
-                                                  color: Theme.of(context).cardColor,
-                                                  borderRadius:
-                                                      BorderRadius.circular(10)),
-                                            );
-                                          }))),
-                        )
-                  : errorMessageCategories != null
-                      ? Container(
-                        height: 70,
-                          child:  Shimmer.fromColors(
-                                      baseColor: Theme.of(context).cardColor,
-                                      highlightColor: Theme.of(context).cardColor.withOpacity(0.5),
-                                      enabled: true,
-                                      child: ListView.builder(
-                                          itemCount: 4,
-                                           physics: const NeverScrollableScrollPhysics(),
-                                          scrollDirection: Axis.horizontal,
-                                          itemBuilder: ((context, index) {
-                                            return Container(
-                                              margin: EdgeInsets.symmetric(
-                                                  horizontal: 5, vertical: 10),
-                                              height: 60,
-                                              width: 120,
-                                              decoration: BoxDecoration(
-                                                  color: Theme.of(context).cardColor,
-                                                  borderRadius:
-                                                      BorderRadius.circular(10)),
-                                            );
-                                          }))),
-                        )
-                      : categories.isEmpty
-                          ?  Center(
-                              child: Text(
-                                'No categories available',
-                                style: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color, fontSize: 12),
-                              ),
-                            )
-                          : SizedBox(
-                              height: 40,
-                              child: ListView.separated(
-                                scrollDirection: Axis.horizontal,
-                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                                itemCount: categories.length,
-                                separatorBuilder: (context, index) => const SizedBox(width: 8.0),
-                                itemBuilder: (context, index) {
-                                  final isSelected = selectedIndex == index;
-                                  final category = categories[index];
-                                  return CategoryChip(
-                                    label: category.name,
-                                    isSelected: isSelected,
-                                    onTap: () => _selectCategory(index, category.id),
-                                  );
-                                },
-                              ),
-                            ),
-            ),
-
-            // --- FILTER DROPDOWN ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Row(
-                    children: [
-                       Text(context.tr.restaurants, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold,)),
-                      if (selectedCategoryId != 0) ...[
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF00a884),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            context.tr.filtered,
-                            style: const TextStyle( fontSize: 10),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  DropdownButton<String>(
-                    value: _currentSort,
-                    dropdownColor: Theme.of(context).cardColor,
-                    icon:  Icon(Icons.filter_list, color: Theme.of(context).primaryColor),
-                    underline: const SizedBox(),
-                    style:  TextStyle( fontSize: 14, color: Theme.of(context).textTheme.bodyMedium?.color),
-                    items: [
-                      DropdownMenuItem(value: 'distance', child: Text(context.tr.byDistance)),
-                      DropdownMenuItem(value: 'reviews', child: Text(context.tr.byReviews)),
-                    ],
-                    onChanged: _changeSort,
-                  ),
-                ],
-              ),
-            ),
-
-            // --- MAIN LIST ---
-            Expanded(
-              child: _isLoading && _allRestaurants.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
-                  : _errorMessage != null && _allRestaurants.isEmpty
-                      ?Container(
-                        margin: EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                        height: 270,
-                          child:  Shimmer.fromColors(
-                                      baseColor: Theme.of(context).cardColor,
-                                      highlightColor: Theme.of(context).cardColor.withOpacity(0.5),
-                                      enabled: true,
-                                      child: ListView.builder(
-                                          itemCount: 4,
-                                           physics: const NeverScrollableScrollPhysics(),
-                                          scrollDirection: Axis.vertical,
-                                          itemBuilder: ((context, index) {
-                                            return Row(
-                                              children:[
-                                                Container(
-                                              margin: EdgeInsets.symmetric(
-                                                  horizontal: 5, vertical: 10),
-                                              height: 120,
-                                              width: 120,
-                                              decoration: BoxDecoration(
-                                                  color: Theme.of(context).cardColor,
-                                                  borderRadius:
-                                                      BorderRadius.circular(10)),
-                                            ),
-                                            Column(
-                                              children: [
-                                                Container(
-                                              margin: EdgeInsets.symmetric(
-                                                  horizontal: 5, vertical: 10),
-                                              height: 30,
-                                              width: 180,
-                                              decoration: BoxDecoration(
-                                                  color: Theme.of(context).cardColor,
-                                                  borderRadius:
-                                                      BorderRadius.circular(10)),
-                                            ),
-                                             Container(
-                                              margin: EdgeInsets.symmetric(
-                                                  horizontal: 5, vertical: 10),
-                                              height: 30,
-                                              width: 180,
-                                              decoration: BoxDecoration(
-                                                  color: Theme.of(context).cardColor,
-                                                  borderRadius:
-                                                      BorderRadius.circular(10)),
-                                            ),]),
-                                            ]);
-                                          }))),
-                        )
-                      : _displayedRestaurants.isEmpty
-                          ?  Center(child: Text(context.tr.noRestaurantsFound, style: TextStyle(color: Colors.grey)))
-                          : RefreshIndicator(
-                              onRefresh: _refresh,
-                              color: Theme.of(context).primaryColor,
-                              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                              child: ListView.separated(
-                                controller: _scrollController,
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                itemCount: _displayedRestaurants.length + 1,
-                                separatorBuilder: (ctx, i) => const Divider(color: Colors.grey, height: 1, thickness: 0.5),
-                                itemBuilder: (context, index) {
-                                  if (index >= _displayedRestaurants.length) {
-                                    return _isLoading 
-                                        ? const Padding(
-                                            padding: EdgeInsets.all(16.0),
-                                            child: Center(child: CircularProgressIndicator()),
-                                          )
-                                        : const SizedBox(height: 50);
-                                  }
-
-                                  final r = _displayedRestaurants[index];
-                                  return GestureDetector(
-                                      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => RestaurantScreen(restaurant: r))),
-      
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                                      child: Row(
-                                        children: [
-                                          Stack(
-                                            children: [
-                                              ClipRRect(
-                                                borderRadius: BorderRadius.circular(10),
-                                                child: SizedBox(
-                                                  width: 70,
-                                                  height: 70,
-                                                  child: r.banner != null
-                                                      ? Image.network(r.banner!, fit: BoxFit.cover, errorBuilder: (c, e, s) => Container(color: Colors.grey))
-                                                      : Container(color: Colors.grey, child: const Icon(Icons.restaurant)),
-                                                ),
-                                              ),
-                                              Positioned(
-                                                bottom: 0,
-                                                right: 0,
-                                                child: CircleAvatar(
-                                                  radius: 14,
-                                                  backgroundColor: Colors.black.withOpacity(0.6),
-                                                  child: CircleAvatar(
-                                                    radius: 12,
-                                                    backgroundImage: r.picture != null ? NetworkImage(r.picture!) : null,
-                                                    backgroundColor: r.picture == null ? Colors.grey : null,
-                                                  ),
-                                                )
-                                              )
-                                            ],
-                                          ),
-                                          const SizedBox(width: 16),
-                                          Expanded(
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Text(
-                                                  r.name ?? "Unknown",maxLines: 1, overflow: TextOverflow.ellipsis,
-                                                  style:  TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Theme.of(context).textTheme.titleMedium?.color),
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(Icons.place_outlined, size: 14, color: Colors.grey),
-                                                    const SizedBox(width: 2),
-                                                    Expanded(child: Text(r.place ?? "Unknown",maxLines: 1, overflow: TextOverflow.ellipsis, style: const TextStyle(color: Colors.grey, fontSize: 12))),
-                                                    if (r.distance != null) ...[
-                                                      const SizedBox(width: 8),
-                                                      Text('${r.distance} ', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                                                    ]
-                                                  ],
-                                                ),
-                                                const SizedBox(height: 4),
-                                                Row(
-                                                  children: [
-                                                    const Icon(Icons.star, size: 14, color: Colors.amber),
-                                                    const SizedBox(width: 2),
-                                                    Text((r.rating ?? r.averageRating ?? 0).toStringAsFixed(1), style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.bold)),
-                                                    const SizedBox(width: 4),
-                                                    Text('(${r.reviews ?? r.totalReviews ?? 0} ${context.tr.reviews})', style: const TextStyle(color: Colors.grey, fontSize: 12)),
-                                                  ],
-                                                ),
-                                                if (r.isOpen == false)
-                                                   Padding(
-                                                    padding: EdgeInsets.only(top: 4),
-                                                    child: Text(context.tr.closed, style: TextStyle(color: Colors.red, fontSize: 12)),
-                                                  ),
-                                              ],
-                                            ),
-                                          ),
-                                          // const Icon(Icons.favorite_border, color: Colors.grey),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
             ),
           ],
-        ),
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _scrollController.dispose();
-    super.dispose();
-  }
-}
-
-// CategoryModel class
-class CategoryModel {
-  final int id;
-  final String name;
-  final String? description;
-  final String? timestamp;
-
-  CategoryModel({
-    required this.id,
-    required this.name,
-    this.description,
-    this.timestamp,
-  });
-
-  factory CategoryModel.fromJson(Map<String, dynamic> json) {
-    return CategoryModel(
-      id: json['id'] ?? 0,
-      name: json['name']?.toString() ?? 'Unknown',
-      description: json['description']?.toString(),
-      timestamp: json['timestamp']?.toString(),
-    );
-  }
-}
-
-// Category Chip Widget
-class CategoryChip extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-
-  const CategoryChip({
-    super.key,
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).primaryColor : Theme.of(context).cardColor,
-          borderRadius: BorderRadius.circular(10.0),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : Theme.of(context).textTheme.titleMedium?.color,
-            fontWeight: FontWeight.w500,
-            fontSize: 14,
-          ),
         ),
       ),
     );

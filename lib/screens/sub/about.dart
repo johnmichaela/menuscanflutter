@@ -24,40 +24,41 @@ class AboutPage extends StatelessWidget {
             const SizedBox(height: 16),
 
             // App Logo
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primaryContainer,
-                borderRadius: BorderRadius.circular(28),
-                boxShadow: [
-                  BoxShadow(
-                    color: theme.colorScheme.primary.withOpacity(0.3),
-                    blurRadius: 20,
-                    offset: const Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Icon(
-                Icons.qr_code_scanner_rounded,
-                size: 64,
-                color: theme.colorScheme.primary,
-              ),
-            ),
-            const SizedBox(height: 20),
+            Image.asset('assets/img/splash.png',color: Theme.of(context).primaryColor,),
+            // Container(
+            //   width: 120,
+            //   height: 120,
+            //   decoration: BoxDecoration(
+            //     color: theme.colorScheme.primaryContainer,
+            //     borderRadius: BorderRadius.circular(28),
+            //     boxShadow: [
+            //       BoxShadow(
+            //         color: theme.colorScheme.primary.withOpacity(0.3),
+            //         blurRadius: 20,
+            //         offset: const Offset(0, 8),
+            //       ),
+            //     ],
+            //   ),
+            //   child: Icon(
+            //     Icons.qr_code_scanner_rounded,
+            //     size: 64,
+            //     color: theme.colorScheme.primary,
+            //   ),
+            // ),
+            // const SizedBox(height: 20),
 
-            // App Name
-            Text(
-              'MenuScan',
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            // // App Name
+            // Text(
+            //   'MenuScan',
+            //   style: theme.textTheme.headlineMedium?.copyWith(
+            //     fontWeight: FontWeight.bold,
+            //   ),
+            // ),
             const SizedBox(height: 4),
 
             // Version
-            Text(
-              'Version 1.0.0',
+            Text( context.tr.version
+              ,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -73,7 +74,7 @@ class AboutPage extends StatelessWidget {
               ),
               child:  Padding(
                 padding: EdgeInsets.all(16),
-                child: Text(
+                child: Text( 
                   'MenuScan lets you instantly scan restaurant QR codes '
                   'to view digital menus, discover dishes, and see prices — '
                   'no app downloads or waiting required.',
@@ -140,14 +141,12 @@ class AboutPage extends StatelessWidget {
             const SizedBox(height: 32),
 
             // Footer
-            Text(
-              'Made with ❤️ by MenuScan Team',
+            Text( context.tr.madeWithLoveBy,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            Text(
-              '© 2025 MenuScan. All rights reserved.',
+            Text(context.tr.allRightsReserved,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),

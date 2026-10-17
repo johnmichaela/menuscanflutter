@@ -75,7 +75,7 @@ class _ProfileShowScreenState extends State<ProfileShowScreen> {
   String? _errorMessage;
   Profile? _profile;
 
-  late final String _baseUrl = 'http://192.168.1.115:8000';
+  late final String _baseUrl = 'https://qopera.app';
 
   @override
   void initState() {

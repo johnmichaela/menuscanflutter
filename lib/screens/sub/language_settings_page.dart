@@ -49,8 +49,7 @@ class LanguageSettingsPage extends StatelessWidget {
                 ),
                 const SizedBox(height: 10),
                 Text(
-                  'MenuScan will use your selection across all screens. '
-                  'Arabic automatically switches the layout to right-to-left.',
+                  context.tr.languageInfo,
                   style: theme.textTheme.bodyMedium?.copyWith(height: 1.5),
                 ),
               ],

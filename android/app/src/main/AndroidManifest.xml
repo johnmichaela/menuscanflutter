@@ -6,7 +6,7 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-feature android:name="android.hardware.camera" android:required="true"/>
     <application
-        android:label="MenuScan"
+        android:label="QOpera"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/circle_ic_launcher">
@@ -44,10 +44,19 @@
          https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
 
          In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT"/>
-            <data android:mimeType="text/plain"/>
-        </intent>
-    </queries>
+   <queries>
+
+    <!-- Allow Flutter text processing -->
+    <intent>
+        <action android:name="android.intent.action.PROCESS_TEXT"/>
+        <data android:mimeType="text/plain"/>
+    </intent>
+
+    <!-- Allow Google Maps app detection -->
+    <intent>
+        <action android:name="android.intent.action.VIEW"/>
+        <data android:scheme="google.navigation"/>
+    </intent>
+
+</queries>
 </manifest>

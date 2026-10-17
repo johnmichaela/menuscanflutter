@@ -6,7 +6,7 @@ import 'package:ballon/models/bussinesstype.dart';
 import 'package:ballon/models/resturants.dart';
 import 'package:ballon/pages/notification_page.dart';
 import 'package:ballon/pagination/ui/bloc/pagination_bloc.dart';
-import 'package:ballon/screens.dart';
+import 'package:ballon/screens/sub/screens.dart';
 import 'package:ballon/search_screen.dart';
 import 'package:ballon/seeallscreen.dart';
 import 'package:ballon/shimmer.dart';
@@ -33,7 +33,7 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
      final app = Provider.of<AppState>(context);
     final nearby = app.allRestaurants.take(5).toList();
-    final String imageUrl = 'http://192.168.1.115:8000';
+    final String imageUrl = 'https://qopera.app';
     
     return  MultiBlocProvider(
         providers: [

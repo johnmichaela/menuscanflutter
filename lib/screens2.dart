@@ -7,7 +7,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'app_state.dart';
 import 'models.dart';
 import 'widgets.dart';
-import 'screens.dart';
+import 'screens/sub/screens.dart';
 
 /// ==================== CART SCREEN ====================
 class CartScreen extends StatelessWidget {

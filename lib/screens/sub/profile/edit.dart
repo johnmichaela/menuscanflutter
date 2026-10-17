@@ -92,7 +92,7 @@
 //   Profile? _currentProfile;
 
 //   // API URL for the specific profile (ID 9)
-//   late final String apiUrl = 'http://192.168.1.115:8000/prof/api-prof/${widget.id}';
+//   late final String apiUrl = 'https://qopera.app/prof/api-prof/${widget.id}';
 
 //   @override
 //   void initState() {
@@ -240,7 +240,7 @@
 //     // });
 //     // print(';.................test val ' + valId.toString());
 //     final response = await http.get(
-//       Uri.parse("http://192.168.1.115:8000/prof/api-prof/"),
+//       Uri.parse("https://qopera.app/prof/api-prof/"),
 //       headers: {
 //         HttpHeaders.authorizationHeader: 'Token ${prefs.getString('token')}',
 //         'Content-Type': 'application/json;charset=UTF-8',
@@ -762,7 +762,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         return;
       }
 
-      apiUrl = 'http://192.168.1.115:8000/prof/api-prof/$_profileId';
+      apiUrl = 'https://qopera.app/prof/api-prof/$_profileId';
       
       final response = await http.get(
         Uri.parse(apiUrl),
@@ -871,8 +871,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // Determine if we're creating or updating
       final bool isCreating = _profileId == null;
       final String url = isCreating 
-          ? 'http://192.168.1.115:8000/prof/api-prof/' 
-          : 'http://192.168.1.115:8000/prof/api-prof/$_profileId';
+          ? 'https://qopera.app/prof/api-prof/' 
+          : 'https://qopera.app/prof/api-prof/$_profileId';
       
       final String method = isCreating ? 'POST' : 'PUT';
       print(url+method);

@@ -45,7 +45,7 @@ class _SignupScreenState extends State<SignupScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => BalloonApp(),
+            builder: (context) => QoperaApp(),
           ),
         );
 
@@ -64,7 +64,7 @@ class _SignupScreenState extends State<SignupScreen> {
 Future<void> register(String username, email, password, password1) async {
     print(username + email + password + password1);
     final http.Response response = await http.post(
-      Uri.parse("http://192.168.1.115:8000/api/register/"),
+      Uri.parse("https://qopera.app/api/register/"),
       headers: <String, String>{
         'Content-Type': 'application/json; charset=UTF-8',
         // ignore: prefer_interpolation_to_compose_strings
@@ -118,7 +118,7 @@ Future<void> register(String username, email, password, password1) async {
   void loginTest() async {
     try {
       http.Response response = await http.post(
-          Uri.parse('http://192.168.1.115:8000/prof/api/login/'),
+          Uri.parse('https://qopera.app/prof/api/login/'),
           body: {
             'username': nameController.text,
             'password': passwordController.text
@@ -206,7 +206,7 @@ Future<void> register(String username, email, password, password1) async {
     try {
       // Update this URL to match your backend API
       final response = await http.post(
-        Uri.parse('http://192.168.1.115:8000/prof/api/register/'),
+        Uri.parse('https://qopera.app/prof/api/register/'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -270,7 +270,8 @@ Future<void> register(String username, email, password, password1) async {
 
   @override
   Widget build(BuildContext context) {
-    final dark = isDarkMode;
+    final dark = Theme.of(context).brightness == Brightness.dark;
+    // final dark = isDarkMode;
 
     return Scaffold(
       backgroundColor: dark ? const Color(0xFF050B18) : const Color(0xFFF8FAFF),
@@ -334,33 +335,33 @@ Future<void> register(String username, email, password, password1) async {
                   const SizedBox(height: 16),
 
                   // Theme switch
-                  Align(
-                    alignment: Alignment.topRight,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: dark
-                            ? Colors.white.withOpacity(.10)
-                            : Colors.white.withOpacity(.85),
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(
-                          color: dark ? Colors.white24 : Colors.blue.shade100,
-                        ),
-                      ),
-                      child: IconButton(
-                        onPressed: () {
-                          setState(() {
-                            isDarkMode = !isDarkMode;
-                          });
-                        },
-                        icon: Icon(
-                          dark
-                              ? Icons.light_mode_rounded
-                              : Icons.dark_mode_rounded,
-                          color: dark ? Colors.white : const Color(0xFF0755C9),
-                        ),
-                      ),
-                    ),
-                  ),
+                  // Align(
+                  //   alignment: Alignment.topRight,
+                  //   child: Container(
+                  //     decoration: BoxDecoration(
+                  //       color: dark
+                  //           ? Colors.white.withOpacity(.10)
+                  //           : Colors.white.withOpacity(.85),
+                  //       borderRadius: BorderRadius.circular(30),
+                  //       border: Border.all(
+                  //         color: dark ? Colors.white24 : Colors.blue.shade100,
+                  //       ),
+                  //     ),
+                  //     child: IconButton(
+                  //       onPressed: () {
+                  //         setState(() {
+                  //           isDarkMode = !isDarkMode;
+                  //         });
+                  //       },
+                  //       icon: Icon(
+                  //         dark
+                  //             ? Icons.light_mode_rounded
+                  //             : Icons.dark_mode_rounded,
+                  //         color: dark ? Colors.white : Theme.of(context).primaryColor,
+                  //       ),
+                  //     ),
+                  //   ),
+                  // ),
 
                   const SizedBox(height: 5),
 
@@ -496,7 +497,7 @@ Future<void> register(String username, email, password, password1) async {
                     children: [
                       Checkbox(
                         value: agreeToTerms,
-                        activeColor: const Color(0xFF087CFF),
+                        activeColor: Theme.of(context).primaryColor,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(5),
                         ),
@@ -517,16 +518,16 @@ Future<void> register(String username, email, password, password1) async {
                               TextSpan(text: context.tr.agreeToTerms),
                               TextSpan(
                                 text: 'Terms & Conditions' ,
-                                style: const TextStyle(
-                                  color: Color(0xFF087CFF),
+                                style:  TextStyle(
+                                  color: Theme.of(context).primaryColor,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
-                              const TextSpan(text: ' and '),
+                              TextSpan(text: ' and '),
                               TextSpan(
                                 text:  context.tr.privacyPolicy,
-                                style: const TextStyle(
-                                  color: Color(0xFF087CFF),
+                                style:  TextStyle(
+                                  color: Theme.of(context).primaryColor,
                                   fontWeight: FontWeight.w700,
                                 ),
                               ),
@@ -551,10 +552,10 @@ Future<void> register(String username, email, password, password1) async {
                         confirmPasswordController.text,
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF087CFF),
+                        backgroundColor: Theme.of(context).primaryColor,
                         foregroundColor: Colors.white,
                         elevation: 5,
-                        shadowColor: const Color(0xFF087CFF).withOpacity(.35),
+                        shadowColor: Theme.of(context).primaryColor.withOpacity(.35),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(18),
                         ),
@@ -626,7 +627,7 @@ Future<void> register(String username, email, password, password1) async {
                       style: OutlinedButton.styleFrom(
                         side: BorderSide(
                           color: dark
-                              ? const Color(0xFF4D9EFF)
+                              ? Theme.of(context).primaryColor
                               : const Color(0xFF9DBBE5),
                         ),
                         shape: RoundedRectangleBorder(
@@ -681,7 +682,7 @@ Future<void> register(String username, email, password, password1) async {
                         child:  Text(
                          context.tr.login,
                           style: TextStyle(
-                            color: Color(0xFF087CFF),
+                            color: Theme.of(context).primaryColor,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -716,8 +717,8 @@ Future<void> register(String username, email, password, password1) async {
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: dark
-              ? const Color(0xFF38547A)
-              : const Color(0xFFD0DEF1),
+              ? Theme.of(context).primaryColor
+              : const Color.fromARGB(255, 208, 222, 241),
         ),
         boxShadow: [
           if (!dark)
@@ -733,7 +734,7 @@ Future<void> register(String username, email, password, password1) async {
         obscureText: obscureText,
         keyboardType: keyboardType,
         style: TextStyle(
-          color: dark ? Colors.white : const Color(0xFF172D4D),
+          color: dark ? Colors.white : const Color.fromARGB(255, 23, 51, 77),
         ),
         decoration: InputDecoration(
           hintText: hint,
@@ -742,7 +743,7 @@ Future<void> register(String username, email, password, password1) async {
           ),
           prefixIcon: Icon(
             icon,
-            color: dark ? const Color(0xFF73B4FF) : const Color(0xFF0755C9),
+            color: dark ? const Color(0xFF73B4FF) : const Color.fromARGB(255, 9, 123, 199),
           ),
           suffixIcon: suffix,
           border: InputBorder.none,

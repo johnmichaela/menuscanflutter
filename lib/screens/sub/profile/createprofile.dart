@@ -144,7 +144,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse("http://192.168.1.115:8000/prof/api-prof/create"),
+        Uri.parse("https://qopera.app/prof/api-prof/create"),
       );
       
       Map<String, String> headers = {
@@ -179,7 +179,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
         
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) =>  BalloonApp()),
+          MaterialPageRoute(builder: (context) =>  QoperaApp()),
         );
       } else {
         final data = jsonDecode(response.body);
@@ -249,7 +249,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
 
       var request = http.MultipartRequest(
         'POST',
-        Uri.parse("http://192.168.1.115:8000/prof/api-prof/create"),
+        Uri.parse("https://qopera.app/prof/api-prof/create"),
       );
       
       Map<String, String> headers = {
@@ -284,7 +284,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
         
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) =>  BalloonApp()),
+          MaterialPageRoute(builder: (context) =>  QoperaApp()),
         );
       } else {
         final data = jsonDecode(response.body);

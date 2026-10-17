@@ -40,7 +40,7 @@ class ResultEvent {
     final int? likeCount;
     final int? shareCount;
     final int? attendeeCount;
-    final bool isLiked;
+    final bool? isLiked;
     final bool? isAttending;
     final List<Comment>? comments;
     final DateTime? createdAt;
@@ -85,7 +85,7 @@ class ResultEvent {
         likeCount: json["like_count"],
         shareCount: json["share_count"],
         attendeeCount: json["attendee_count"],
-        isLiked: json["is_liked"],
+        isLiked: json["is_liked"]??false,
         isAttending: json["is_attending"],
         comments: json["comments"] == null ? [] : List<Comment>.from(json["comments"]!.map((x) => Comment.fromJson(x))),
         createdAt: json["created_at"] == null ? null : DateTime.parse(json["created_at"]),

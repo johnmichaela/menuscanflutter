@@ -1,16 +1,18 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:ballon/core/handle_error/execptions.dart';
 import 'package:ballon/models/resturants.dart' show Food, Result, Resturants;
 import 'package:ballon/pagination/data/data_source/urls.dart';
 import 'package:ballon/qr_scanner_screen.dart';
-import 'package:ballon/screens.dart';
+import 'package:ballon/screens/sub/screens.dart';
 import 'package:ballon/services/geolocation.dart';
 import 'package:ballon/shimmer.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:ballon/l10n/app_strings.dart';
+import 'package:internet_connection_checker/internet_connection_checker.dart';
 
 // --- API SERVICE ---
 class ApiService {
@@ -67,7 +69,9 @@ class _DiscoverPageState extends State<DiscoverPage> {
   String? _errorMessage;
   int _currentPage = 1;
   String _currentSort = 'reviews';
-  
+  StreamSubscription<InternetConnectionStatus>? _connectionSubscription;
+
+ InternetConnectionStatus? _lastConnectionStatus;
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -76,6 +80,16 @@ class _DiscoverPageState extends State<DiscoverPage> {
     _loadFoods();
     _scrollController.addListener(_onScroll);
     _searchController.addListener(_filterFoods);
+     _connectionSubscription =
+      InternetConnectionChecker.instance.onStatusChange.listen((status) {
+    if (_lastConnectionStatus == InternetConnectionStatus.disconnected &&
+        status == InternetConnectionStatus.connected) {
+      
+       _loadFoods();
+    }
+
+    _lastConnectionStatus = status;
+  });
   }
 
   // Fetch restaurants and extract all food items with restaurant info
@@ -189,7 +203,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
                           Expanded(
                             child: TextField(
                               controller: _searchController,
-                              style:  TextStyle(color: Colors.white),
+                              style:  TextStyle(color: Colors.grey),
                               decoration:  InputDecoration(
                                 hintText: context.tr.searchDishesOrRestaurants,
                                 hintStyle: TextStyle(color: Colors.grey, fontSize: 16),
