@@ -190,7 +190,7 @@ void loginTest() async {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    // final theme = Theme.of(context);
     final dark =  Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
@@ -443,34 +443,34 @@ void loginTest() async {
                       const SizedBox(height: 22),
                   
                       // OR divider
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Divider(
-                              color: dark ? Colors.white24 : Colors.blueGrey.shade200,
-                            ),
-                          ),
-                          Padding(
-                            padding:
-                                 EdgeInsets.symmetric(horizontal: 15),
-                            child: Text(
-                               context.tr.or,
-                              style: TextStyle(
-                                color: dark
-                                    ? Colors.white60
-                                    : Colors.blueGrey,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: Divider(
-                              color: dark ? Colors.white24 : Colors.blueGrey.shade200,
-                            ),
-                          ),
-                        ],
-                      ),
+                      // Row(
+                      //   children: [
+                      //     Expanded(
+                      //       child: Divider(
+                      //         color: dark ? Colors.white24 : Colors.blueGrey.shade200,
+                      //       ),
+                      //     ),
+                      //     Padding(
+                      //       padding:
+                      //            EdgeInsets.symmetric(horizontal: 15),
+                      //       child: Text(
+                      //          context.tr.or,
+                      //         style: TextStyle(
+                      //           color: dark
+                      //               ? Colors.white60
+                      //               : Colors.blueGrey,
+                      //         ),
+                      //       ),
+                      //     ),
+                      //     Expanded(
+                      //       child: Divider(
+                      //         color: dark ? Colors.white24 : Colors.blueGrey.shade200,
+                      //       ),
+                      //     ),
+                      //   ],
+                      // ),
                   
-                      const SizedBox(height: 18),
+                      // const SizedBox(height: 18),
                   
                       // Google button
                       // SizedBox(
@@ -523,58 +523,58 @@ void loginTest() async {
                       //   ),
                       // ),
                     
-                     SizedBox(
-            width: double.infinity,
-            height: 55,
-            child: OutlinedButton(
-              onPressed: _isGoogleLoading ? null : _handleGoogleSignIn,
-              style: OutlinedButton.styleFrom(
-                side: BorderSide(
-                  color: dark
-                      ? const Color(0xFF4D9EFF)
-                      : const Color(0xFF9DBBE5),
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(18),
-                ),
-              ),
-              child: _isGoogleLoading
-                  ? const SizedBox(
-                      width: 22,
-                      height: 22,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 25,
-                          height: 25,
-                          alignment: Alignment.center,
-                          child: const Text(
-                            'G',
-                            style: TextStyle(
-                              fontSize: 23,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.blue,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          context.tr.continueWithGoogle,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                            color: dark
-                                ? Colors.white
-                                : const Color(0xFF123D91),
-                          ),
-                        ),
-                      ],
-                    ),
-            ),
-          ),
+          //            SizedBox(
+          //   width: double.infinity,
+          //   height: 55,
+          //   child: OutlinedButton(
+          //     onPressed: _isGoogleLoading ? null : _handleGoogleSignIn,
+          //     style: OutlinedButton.styleFrom(
+          //       side: BorderSide(
+          //         color: dark
+          //             ? const Color(0xFF4D9EFF)
+          //             : const Color(0xFF9DBBE5),
+          //       ),
+          //       shape: RoundedRectangleBorder(
+          //         borderRadius: BorderRadius.circular(18),
+          //       ),
+          //     ),
+          //     child: _isGoogleLoading
+          //         ? const SizedBox(
+          //             width: 22,
+          //             height: 22,
+          //             child: CircularProgressIndicator(strokeWidth: 2),
+          //           )
+          //         : Row(
+          //             mainAxisAlignment: MainAxisAlignment.center,
+          //             children: [
+          //               Container(
+          //                 width: 25,
+          //                 height: 25,
+          //                 alignment: Alignment.center,
+          //                 child: const Text(
+          //                   'G',
+          //                   style: TextStyle(
+          //                     fontSize: 23,
+          //                     fontWeight: FontWeight.bold,
+          //                     color: Colors.blue,
+          //                   ),
+          //                 ),
+          //               ),
+          //               const SizedBox(width: 12),
+          //               Text(
+          //                 context.tr.continueWithGoogle,
+          //                 style: TextStyle(
+          //                   fontSize: 16,
+          //                   fontWeight: FontWeight.w600,
+          //                   color: dark
+          //                       ? Colors.white
+          //                       : const Color(0xFF123D91),
+          //                 ),
+          //               ),
+          //             ],
+          //           ),
+          //   ),
+          // ),
                   
                       const SizedBox(height: 25),
                   
@@ -640,7 +640,7 @@ void loginTest() async {
         color: dark
             ? const Color(0xFF101D32).withOpacity(.92)
             : Colors.white.withOpacity(.92),
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(10),
         border: Border.all(
           color: dark
               ? const Color(0xFF38547A)

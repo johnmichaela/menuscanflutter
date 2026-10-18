@@ -2376,8 +2376,10 @@ class _MainScaffoldState extends State<MainScaffold> {
 
   AppBar _buildAppBar(BuildContext context) {
     return AppBar(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      elevation: 0,
+      // backgroundColor: Theme.of(context).,
+      // elevation: 0,
+      shadowColor: Colors.grey.withOpacity(0.3),
+      toolbarHeight: 80.0, 
       titleSpacing: 16,
       title: Row(
         children: [

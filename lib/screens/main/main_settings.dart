@@ -247,17 +247,17 @@ class _SettingsPageState extends State<SettingsPage> {
     final themeCtrl = context.watch<ThemeController>();
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      appBar: AppBar(
-        title: Text(
-          context.tr.settings,
-          style: TextStyle(
-            color: Theme.of(context).textTheme.titleMedium?.color,
-          ),
-        ),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        elevation: 0,
-        iconTheme: Theme.of(context).iconTheme,
-      ),
+      // appBar: AppBar(
+      //   title: Text(
+      //     context.tr.settings,
+      //     style: TextStyle(
+      //       color: Theme.of(context).textTheme.titleMedium?.color,
+      //     ),
+      //   ),
+      //   backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+      //   elevation: 0,
+      //   iconTheme: Theme.of(context).iconTheme,
+      // ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -394,12 +394,12 @@ class _SettingsPageState extends State<SettingsPage> {
                     style: TextStyle(color: Colors.grey),
                   ),
                 ),
-                _buildSettingTile(
-                  icon: Icons.notifications,
-                  title: context.tr.notifications,
-                  subtitle: context.tr.pushNotifications,
-                  onTap: () => _navigateToNotificationSettings(context),
-                ),
+                // _buildSettingTile(
+                //   icon: Icons.notifications,
+                //   title: context.tr.notifications,
+                //   subtitle: context.tr.pushNotifications,
+                //   onTap: () => _navigateToNotificationSettings(context),
+                // ),
                 _buildSettingTile(
                   icon: themeCtrl.mode.isDark
                       ? Icons.dark_mode
@@ -735,18 +735,18 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _deleteAccount() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final token = prefs.getString('auth_token');
+      final token = prefs.getString('token');
 
       if (token == null) return;
 
-      final response = await http.delete(
-        Uri.parse('https://qopera.app/prof/api/user/delete/'),
+      final response = await http.post(
+        Uri.parse('https://qopera.app/prof/api/user/delete'),
         headers: {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
         },
       );
-
+      print("response status ${response.statusCode}");
       if (response.statusCode == 200 || response.statusCode == 204) {
         await prefs.remove('auth_token');
         setState(() {

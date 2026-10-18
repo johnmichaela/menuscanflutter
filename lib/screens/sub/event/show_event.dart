@@ -471,7 +471,7 @@ class _EventListScreenState extends State<EventListScreen> {
         foregroundColor: Colors.white,
         elevation: 0,
         title:  Text(
-          'Events'+ context.tr.events,
+           context.tr.eventer,
           style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
         ),
         actions: [
@@ -537,7 +537,7 @@ class _EventListScreenState extends State<EventListScreen> {
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
       children: [
         Text(
-          context.tr.events,
+          context.tr.eventer,
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,

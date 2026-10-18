@@ -176,152 +176,362 @@ class _DiscoverPageState extends State<DiscoverPage> {
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Column(
-          children: [
+  // @override
+  // Widget build(BuildContext context) {
+  //   return Scaffold(
+  //     backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+  //     body: SafeArea(
+  //       child: Column(
+  //         children: [
+  //           // --- SEARCH BAR AND QR ICON ---
+  //           Padding(
+  //             padding: const EdgeInsets.all(12.0),
+  //             child: Row(
+  //               children: [
+  //                 Expanded(
+  //                   child: Container(
+  //                     height: 50,
+  //                     padding: const EdgeInsets.symmetric(horizontal: 12),
+  //                     decoration: BoxDecoration(
+  //                       color: Theme.of(context).cardColor,
+  //                       borderRadius: BorderRadius.circular(10),
+  //                     ),
+  //                     child: Row(
+  //                       children: [
+  //                         const Icon(Icons.search, color: Colors.grey),
+  //                         const SizedBox(width: 10),
+  //                         Expanded(
+  //                           child: TextField(
+  //                             controller: _searchController,
+  //                             style:  TextStyle(color: Colors.grey),
+  //                             decoration:  InputDecoration(
+  //                               hintText: context.tr.searchDishesOrRestaurants,
+  //                               hintStyle: TextStyle(color: Colors.grey, fontSize: 16),
+  //                               border: InputBorder.none,
+  //                             ),
+  //                           ),
+  //                         ),
+  //                         if (_searchController.text.isNotEmpty)
+  //                           GestureDetector(
+  //                             onTap: () => _searchController.clear(),
+  //                             child: const Icon(Icons.close, color: Colors.grey, size: 20),
+  //                           ),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ),
+  //                 const SizedBox(width: 12),
+  //                 GestureDetector(
+  //                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QrScannerScreen())),
+  //                   child: Container(
+  //                     height: 50,
+  //                     width: 50,
+  //                     decoration: BoxDecoration(
+  //                       color: Theme.of(context).primaryColor,
+  //                       borderRadius: BorderRadius.circular(10),
+  //                   ),
+  //                   child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 28),
+  //                 ),)
+  //               ],
+  //             ),
+  //           ),
+
+  //           // --- TITLE AND FILTER ---
+  //           Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+  //             child: Row(
+  //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+  //               children: [
+  //                  Text(context.tr.discover, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold,)),
+  //                 DropdownButton<String>(
+  //                   value: _currentSort,
+  //                   dropdownColor: Theme.of(context).cardColor,
+  //                   icon:  Icon(Icons.filter_list, color: Theme.of(context).primaryColor),
+  //                   underline: const SizedBox(),
+  //                   style: TextStyle(color: Theme.of(context).textTheme.titleMedium?.color, fontSize: 14),
+  //                   items:  [
+  //                     DropdownMenuItem(value: 'reviews', child: Text(context.tr.topRated)),
+  //                      DropdownMenuItem(value: 'distance', child: Text(context.tr.nearbyRestaurants)),
+  //                   ],
+  //                   onChanged: _changeSort,
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+
+  //           // --- GRID LIST OF FOODS (3 COLUMNS) ---
+  //           Expanded(
+  //             child: _isLoading && _allFoods.isEmpty
+  //                 ? const Center(child: CircularProgressIndicator())
+  //                 : _errorMessage != null && _allFoods.isEmpty
+  //                     ?  Container(
+  //                       margin: const EdgeInsets.all(20),
+  //                           height: 300,
+  //                           child: Shimmer.fromColors(
+  //                             baseColor: Theme.of(context).cardColor,
+  //                             highlightColor: Theme.of(context).cardColor.withOpacity(0.5),
+  //                             enabled: true,
+  //                             child: GridView.builder(
+  //                               itemCount: 15, // 2 rows × 3 columns
+  //                               physics: const NeverScrollableScrollPhysics(),
+  //                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
+  //                               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+  //                                 crossAxisCount: 3, // 3 columns
+  //                                 crossAxisSpacing: 10,
+  //                                 mainAxisSpacing: 10,
+  //                                 childAspectRatio: 1.0,
+  //                               ),
+  //                               itemBuilder: (context, index) {
+  //                                 return Container(
+  //                                   decoration: BoxDecoration(
+  //                                     color: Theme.of(context).cardColor,
+  //                                     borderRadius: BorderRadius.circular(10),
+  //                                   ),
+  //                                 );
+  //                               },
+  //                             ),
+  //                           ),
+  //                         )
+  //                     : _displayedFoods.isEmpty
+  //                         ?  Center(child: Text(context.tr.noDishesFound, style: TextStyle(color: Colors.grey)))
+  //                         : RefreshIndicator(
+  //                             onRefresh: _refresh,
+  //                             color: Theme.of(context).primaryColor,
+  //                             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+  //                             child: GridView.builder(
+  //                               controller: _scrollController,
+  //                               physics: const AlwaysScrollableScrollPhysics(),
+  //                               padding: const EdgeInsets.all(12.0),
+  //                               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+  //                                 crossAxisCount: 3, // CHANGED: 3 columns
+  //                                 childAspectRatio: 0.65, // Adjusted for 3 columns
+  //                                 crossAxisSpacing: 8,
+  //                                 mainAxisSpacing: 8,
+  //                               ),
+  //                               itemCount: _displayedFoods.length,
+  //                               itemBuilder: (context, index) {
+  //                                 final foodWithRestaurant = _displayedFoods[index];
+  //                                 return _FoodCard(foodWithRestaurant: foodWithRestaurant);
+  //                               },
+  //                             ),
+  //                           ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
+
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+    body: SafeArea(
+      child: RefreshIndicator(
+        onRefresh: _refresh,
+        color: Theme.of(context).primaryColor,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        child: CustomScrollView(
+          controller: _scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
             // --- SEARCH BAR AND QR ICON ---
-            Padding(
-              padding: const EdgeInsets.all(12.0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Container(
-                      height: 50,
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.search, color: Colors.grey),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: TextField(
-                              controller: _searchController,
-                              style:  TextStyle(color: Colors.grey),
-                              decoration:  InputDecoration(
-                                hintText: context.tr.searchDishesOrRestaurants,
-                                hintStyle: TextStyle(color: Colors.grey, fontSize: 16),
-                                border: InputBorder.none,
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 50,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).cardColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.search, color: Colors.grey),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: TextField(
+                                controller: _searchController,
+                                style: const TextStyle(color: Colors.grey),
+                                decoration: InputDecoration(
+                                  hintText: context.tr.searchDishesOrRestaurants,
+                                  hintStyle: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 16,
+                                  ),
+                                  border: InputBorder.none,
+                                ),
                               ),
                             ),
-                          ),
-                          if (_searchController.text.isNotEmpty)
-                            GestureDetector(
-                              onTap: () => _searchController.clear(),
-                              child: const Icon(Icons.close, color: Colors.grey, size: 20),
-                            ),
-                        ],
+                            if (_searchController.text.isNotEmpty)
+                              GestureDetector(
+                                onTap: () => _searchController.clear(),
+                                child: const Icon(
+                                  Icons.close,
+                                  color: Colors.grey,
+                                  size: 20,
+                                ),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QrScannerScreen())),
-                    child: Container(
-                      height: 50,
-                      width: 50,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).primaryColor,
-                        borderRadius: BorderRadius.circular(10),
+                    const SizedBox(width: 12),
+                    GestureDetector(
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+                      ),
+                      child: Container(
+                        height: 50,
+                        width: 50,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).primaryColor,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.qr_code_scanner,
+                          color: Colors.white,
+                          size: 28,
+                        ),
+                      ),
                     ),
-                    child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 28),
-                  ),)
-                ],
+                  ],
+                ),
               ),
             ),
 
             // --- TITLE AND FILTER ---
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                   Text(context.tr.discover, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold,)),
-                  DropdownButton<String>(
-                    value: _currentSort,
-                    dropdownColor: Theme.of(context).cardColor,
-                    icon:  Icon(Icons.filter_list, color: Theme.of(context).primaryColor),
-                    underline: const SizedBox(),
-                    style: TextStyle(color: Theme.of(context).textTheme.titleMedium?.color, fontSize: 14),
-                    items:  [
-                      DropdownMenuItem(value: 'reviews', child: Text(context.tr.topRated)),
-                       DropdownMenuItem(value: 'distance', child: Text(context.tr.nearbyRestaurants)),
-                    ],
-                    onChanged: _changeSort,
-                  ),
-                ],
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      context.tr.discover,
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    DropdownButton<String>(
+                      value: _currentSort,
+                      dropdownColor: Theme.of(context).cardColor,
+                      icon: Icon(
+                        Icons.filter_list,
+                        color: Theme.of(context).primaryColor,
+                      ),
+                      underline: const SizedBox(),
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.titleMedium?.color,
+                        fontSize: 14,
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'reviews',
+                          child: Text(context.tr.topRated),
+                        ),
+                        DropdownMenuItem(
+                          value: 'distance',
+                          child: Text(context.tr.nearbyRestaurants),
+                        ),
+                      ],
+                      onChanged: _changeSort,
+                    ),
+                  ],
+                ),
               ),
             ),
 
             // --- GRID LIST OF FOODS (3 COLUMNS) ---
-            Expanded(
-              child: _isLoading && _allFoods.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
-                  : _errorMessage != null && _allFoods.isEmpty
-                      ?  Container(
-                        margin: const EdgeInsets.all(20),
-                            height: 300,
-                            child: Shimmer.fromColors(
-                              baseColor: Theme.of(context).cardColor,
-                              highlightColor: Theme.of(context).cardColor.withOpacity(0.5),
-                              enabled: true,
-                              child: GridView.builder(
-                                itemCount: 15, // 2 rows × 3 columns
-                                physics: const NeverScrollableScrollPhysics(),
-                                padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3, // 3 columns
-                                  crossAxisSpacing: 10,
-                                  mainAxisSpacing: 10,
-                                  childAspectRatio: 1.0,
-                                ),
-                                itemBuilder: (context, index) {
-                                  return Container(
-                                    decoration: BoxDecoration(
-                                      color: Theme.of(context).cardColor,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                  );
-                                },
-                              ),
-                            ),
-                          )
-                      : _displayedFoods.isEmpty
-                          ?  Center(child: Text(context.tr.noDishesFound, style: TextStyle(color: Colors.grey)))
-                          : RefreshIndicator(
-                              onRefresh: _refresh,
-                              color: Theme.of(context).primaryColor,
-                              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                              child: GridView.builder(
-                                controller: _scrollController,
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                padding: const EdgeInsets.all(12.0),
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 3, // CHANGED: 3 columns
-                                  childAspectRatio: 0.65, // Adjusted for 3 columns
-                                  crossAxisSpacing: 8,
-                                  mainAxisSpacing: 8,
-                                ),
-                                itemCount: _displayedFoods.length,
-                                itemBuilder: (context, index) {
-                                  final foodWithRestaurant = _displayedFoods[index];
-                                  return _FoodCard(foodWithRestaurant: foodWithRestaurant);
-                                },
-                              ),
-                            ),
-            ),
+            if (_isLoading && _allFoods.isEmpty)
+              // Loading state
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_errorMessage != null && _allFoods.isEmpty)
+              // Error state
+              SliverToBoxAdapter(
+                child: Container(
+                  margin: const EdgeInsets.all(20),
+                  height: 300,
+                  child: Shimmer.fromColors(
+                    baseColor: Theme.of(context).cardColor,
+                    highlightColor:
+                        Theme.of(context).cardColor.withOpacity(0.5),
+                    enabled: true,
+                    child: GridView.builder(
+                      itemCount: 15,
+                      physics: const NeverScrollableScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 10,
+                      ),
+                      gridDelegate:
+                          const SliverGridDelegateWithFixedCrossAxisCount(
+                        crossAxisCount: 3,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                        childAspectRatio: 1.0,
+                      ),
+                      itemBuilder: (context, index) {
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              )
+            else if (_displayedFoods.isEmpty)
+              // Empty state
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Text(
+                    context.tr.noDishesFound,
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                ),
+              )
+            else
+              // Main grid
+              SliverPadding(
+                padding: const EdgeInsets.all(12.0),
+                sliver: SliverGrid(
+                  gridDelegate:
+                      const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 0.65,
+                    crossAxisSpacing: 8,
+                    mainAxisSpacing: 8,
+                  ),
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final foodWithRestaurant = _displayedFoods[index];
+                      return _FoodCard(
+                        foodWithRestaurant: foodWithRestaurant,
+                      );
+                    },
+                    childCount: _displayedFoods.length,
+                  ),
+                ),
+              ),
           ],
         ),
       ),
-    );
-  }
-
+    ),
+  );
+}
   @override
   void dispose() {
     _searchController.dispose();

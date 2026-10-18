@@ -589,80 +589,80 @@ Future<void> register(String username, email, password, password1) async {
                   const SizedBox(height: 18),
 
                   // OR divider
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color: dark ? Colors.white24 : Colors.blueGrey.shade200,
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 15),
-                        child: Text(
-                          context.tr.or,
-                          style: TextStyle(
-                            color: dark ? Colors.white60 : Colors.blueGrey,
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Divider(
-                          color: dark ? Colors.white24 : Colors.blueGrey.shade200,
-                        ),
-                      ),
-                    ],
-                  ),
+                  // Row(
+                  //   children: [
+                  //     Expanded(
+                  //       child: Divider(
+                  //         color: dark ? Colors.white24 : Colors.blueGrey.shade200,
+                  //       ),
+                  //     ),
+                  //     Padding(
+                  //       padding: const EdgeInsets.symmetric(horizontal: 15),
+                  //       child: Text(
+                  //         context.tr.or,
+                  //         style: TextStyle(
+                  //           color: dark ? Colors.white60 : Colors.blueGrey,
+                  //         ),
+                  //       ),
+                  //     ),
+                  //     Expanded(
+                  //       child: Divider(
+                  //         color: dark ? Colors.white24 : Colors.blueGrey.shade200,
+                  //       ),
+                  //     ),
+                  //   ],
+                  // ),
 
-                  const SizedBox(height: 16),
+                  // const SizedBox(height: 16),
 
-                  // Google button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 55,
-                    child: OutlinedButton(
-                      onPressed: () {
-                        // TODO: Google authentication
-                        _showSnackBar( context.tr.googleSignUpComingSoon, isError: false);
-                      },
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(
-                          color: dark
-                              ? Theme.of(context).primaryColor
-                              : const Color(0xFF9DBBE5),
-                        ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: 25,
-                            height: 25,
-                            alignment: Alignment.center,
-                            child: const Text(
-                              'G',
-                              style: TextStyle(
-                                fontSize: 23,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            context.tr.continueWithGoogle,
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                              color: dark ? Colors.white : const Color(0xFF123D91),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                  // // Google button
+                  // SizedBox(
+                  //   width: double.infinity,
+                  //   height: 55,
+                  //   child: OutlinedButton(
+                  //     onPressed: () {
+                  //       // TODO: Google authentication
+                  //       _showSnackBar( context.tr.googleSignUpComingSoon, isError: false);
+                  //     },
+                  //     style: OutlinedButton.styleFrom(
+                  //       side: BorderSide(
+                  //         color: dark
+                  //             ? Theme.of(context).primaryColor
+                  //             : const Color(0xFF9DBBE5),
+                  //       ),
+                  //       shape: RoundedRectangleBorder(
+                  //         borderRadius: BorderRadius.circular(18),
+                  //       ),
+                  //     ),
+                  //     child: Row(
+                  //       mainAxisAlignment: MainAxisAlignment.center,
+                  //       children: [
+                  //         Container(
+                  //           width: 25,
+                  //           height: 25,
+                  //           alignment: Alignment.center,
+                  //           child: const Text(
+                  //             'G',
+                  //             style: TextStyle(
+                  //               fontSize: 23,
+                  //               fontWeight: FontWeight.bold,
+                  //               color: Colors.blue,
+                  //             ),
+                  //           ),
+                  //         ),
+                  //         const SizedBox(width: 12),
+                  //         Text(
+                  //           context.tr.continueWithGoogle,
+                  //           style: TextStyle(
+                  //             fontSize: 16,
+                  //             fontWeight: FontWeight.w600,
+                  //             color: dark ? Colors.white : const Color(0xFF123D91),
+                  //           ),
+                  //         ),
+                  //       ],
+                  //     ),
+                  //   ),
+                  // ),
 
                   const SizedBox(height: 22),
 

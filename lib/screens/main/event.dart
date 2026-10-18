@@ -269,665 +269,1225 @@ void _openImageViewerx(
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(
-        context,
-      ).scaffoldBackgroundColor, // Dark theme matching restaurant page
+//   @override
+//   Widget build(BuildContext context) {
+//     return Scaffold(
+//       backgroundColor: Theme.of(
+//         context,
+//       ).scaffoldBackgroundColor, // Dark theme matching restaurant page
 
-      drawer: _buildSidebar(),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // --- SEARCH BAR AND QR ICON ---
-            // Padding(
-            //   padding: const EdgeInsets.all(12.0),
-            //   child: Row(
-            //     children: [
-            //       // Search Input
-            //       Expanded(
-            //         child: Container(
-            //           height: 50,
-            //           padding: const EdgeInsets.symmetric(horizontal: 12),
-            //           decoration: BoxDecoration(
-            //             color: Theme.of(context).cardColor,
-            //             borderRadius: BorderRadius.circular(10),
-            //           ),
-            //           child: Row(
-            //             children: [
-            //               const Icon(Icons.search, color: Colors.grey),
-            //               const SizedBox(width: 10),
-            //               Expanded(
-            //                 child: TextField(
-            //                   controller: _searchController,
-            //                   style: TextStyle(color: Colors.grey),
-            //                   decoration: InputDecoration(
-            //                     hintText: context.tr.searchPostsOrPlaces,
-            //                     hintStyle: TextStyle(
-            //                       color: Colors.grey,
-            //                       fontSize: 16,
-            //                     ),
-            //                     border: InputBorder.none,
-            //                   ),
-            //                 ),
-            //               ),
-            //               if (_searchController.text.isNotEmpty)
-            //                 GestureDetector(
-            //                   onTap: () => _searchController.clear(),
-            //                   child: const Icon(
-            //                     Icons.close,
-            //                     color: Colors.grey,
-            //                     size: 20,
-            //                   ),
-            //                 ),
-            //             ],
-            //           ),
-            //         ),
-            //       ),
-            //       const SizedBox(width: 12),
-            //       // QR Scanner Button
-            //       GestureDetector(
-            //         onTap: () => Navigator.push(
-            //           context,
-            //           MaterialPageRoute(
-            //             builder: (_) => const QrScannerScreen(),
-            //           ),
-            //         ),
-            //         child: Container(
-            //           height: 50,
-            //           width: 50,
-            //           decoration: BoxDecoration(
-            //             color: Theme.of(context).primaryColor,
-            //             borderRadius: BorderRadius.circular(10),
-            //           ),
-            //           child: const Icon(
-            //             Icons.qr_code_scanner,
-            //             color: Colors.white,
-            //             size: 28,
-            //           ),
-            //         ),
-            //       ),
-            //     ],
-            //   ),
-            // ),
+//       // drawer: _buildSidebar(),
+//       body: SafeArea(
+//         child: Column(
+//           children: [
+//             // --- SEARCH BAR AND QR ICON ---
+//             // Padding(
+//             //   padding: const EdgeInsets.all(12.0),
+//             //   child: Row(
+//             //     children: [
+//             //       // Search Input
+//             //       Expanded(
+//             //         child: Container(
+//             //           height: 50,
+//             //           padding: const EdgeInsets.symmetric(horizontal: 12),
+//             //           decoration: BoxDecoration(
+//             //             color: Theme.of(context).cardColor,
+//             //             borderRadius: BorderRadius.circular(10),
+//             //           ),
+//             //           child: Row(
+//             //             children: [
+//             //               const Icon(Icons.search, color: Colors.grey),
+//             //               const SizedBox(width: 10),
+//             //               Expanded(
+//             //                 child: TextField(
+//             //                   controller: _searchController,
+//             //                   style: TextStyle(color: Colors.grey),
+//             //                   decoration: InputDecoration(
+//             //                     hintText: context.tr.searchPostsOrPlaces,
+//             //                     hintStyle: TextStyle(
+//             //                       color: Colors.grey,
+//             //                       fontSize: 16,
+//             //                     ),
+//             //                     border: InputBorder.none,
+//             //                   ),
+//             //                 ),
+//             //               ),
+//             //               if (_searchController.text.isNotEmpty)
+//             //                 GestureDetector(
+//             //                   onTap: () => _searchController.clear(),
+//             //                   child: const Icon(
+//             //                     Icons.close,
+//             //                     color: Colors.grey,
+//             //                     size: 20,
+//             //                   ),
+//             //                 ),
+//             //             ],
+//             //           ),
+//             //         ),
+//             //       ),
+//             //       const SizedBox(width: 12),
+//             //       // QR Scanner Button
+//             //       GestureDetector(
+//             //         onTap: () => Navigator.push(
+//             //           context,
+//             //           MaterialPageRoute(
+//             //             builder: (_) => const QrScannerScreen(),
+//             //           ),
+//             //         ),
+//             //         child: Container(
+//             //           height: 50,
+//             //           width: 50,
+//             //           decoration: BoxDecoration(
+//             //             color: Theme.of(context).primaryColor,
+//             //             borderRadius: BorderRadius.circular(10),
+//             //           ),
+//             //           child: const Icon(
+//             //             Icons.qr_code_scanner,
+//             //             color: Colors.white,
+//             //             size: 28,
+//             //           ),
+//             //         ),
+//             //       ),
+//             //     ],
+//             //   ),
+//             // ),
 
-            // --- FILTER DROPDOWN ---
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 12.0,
-                vertical: 8.0,
-              ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    context.tr.events,
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
-                  DropdownButton<String>(
-                    value: _currentSort,
-                    dropdownColor: Theme.of(context).cardColor,
-                    icon: Icon(
-                      Icons.filter_list,
-                      color: Theme.of(context).primaryColor,
-                    ),
-                    underline: const SizedBox(),
-                    style: TextStyle(
-                      color: Theme.of(context).textTheme.bodyMedium?.color,
-                      fontSize: 14,
-                    ),
-                    items: [
-                      DropdownMenuItem(
-                        value: 'date',
-                        child: Text(context.tr.byDate),
+//             // --- FILTER DROPDOWN ---
+//             Padding(
+//               padding: const EdgeInsets.symmetric(
+//                 horizontal: 12.0,
+//                 vertical: 8.0,
+//               ),
+//               child: Row(
+//                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                 children: [
+//                   Text(
+//                     context.tr.events,
+//                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+//                   ),
+//                   DropdownButton<String>(
+//                     value: _currentSort,
+//                     dropdownColor: Theme.of(context).cardColor,
+//                     icon: Icon(
+//                       Icons.filter_list,
+//                       color: Theme.of(context).primaryColor,
+//                     ),
+//                     underline: const SizedBox(),
+//                     style: TextStyle(
+//                       color: Theme.of(context).textTheme.bodyMedium?.color,
+//                       fontSize: 14,
+//                     ),
+//                     items: [
+//                       DropdownMenuItem(
+//                         value: 'date',
+//                         child: Text(context.tr.byDate),
+//                       ),
+//                       DropdownMenuItem(
+//                         value: 'popularity',
+//                         child: Text(context.tr.byPopularity),
+//                       ),
+//                     ],
+//                     onChanged: _changeSort,
+//                   ),
+//                 ],
+//               ),
+//             ),
+
+//             // --- MAIN LIST ---
+//             Expanded(
+//               child: _isLoading && _allEvents.isEmpty
+//                   ? const Center(child: CircularProgressIndicator())
+//                   : _errorMessage != null && _allEvents.isEmpty
+//                   ? Container(
+//                       margin: EdgeInsets.symmetric(
+//                         horizontal: 16,
+//                         vertical: 5,
+//                       ),
+//                       height: 270,
+//                       child: Shimmer.fromColors(
+//                         baseColor: Theme.of(context).cardColor,
+//                         highlightColor: Theme.of(
+//                           context,
+//                         ).cardColor.withOpacity(0.5),
+//                         enabled: true,
+//                         child: ListView.builder(
+//                           itemCount: 4,
+//                           physics: const NeverScrollableScrollPhysics(),
+//                           scrollDirection: Axis.vertical,
+//                           itemBuilder: ((context, index) {
+//                             return Column(
+//                               children: [
+//                                 Row(
+//                                   children: [
+//                                     Container(
+//                                       margin: EdgeInsets.symmetric(
+//                                         horizontal: 5,
+//                                         vertical: 10,
+//                                       ),
+//                                       height: 60,
+//                                       width: 60,
+//                                       decoration: BoxDecoration(
+//                                         color: Theme.of(context).cardColor,
+//                                         borderRadius: BorderRadius.circular(70),
+//                                       ),
+//                                     ),
+//                                     Column(
+//                                       children: [
+//                                         Container(
+//                                           margin: EdgeInsets.symmetric(
+//                                             horizontal: 5,
+//                                             vertical: 10,
+//                                           ),
+//                                           height: 30,
+//                                           width: 180,
+//                                           decoration: BoxDecoration(
+//                                             color: Theme.of(context).cardColor,
+//                                             borderRadius: BorderRadius.circular(
+//                                               10,
+//                                             ),
+//                                           ),
+//                                         ),
+//                                       ],
+//                                     ),
+//                                   ],
+//                                 ),
+//                                 Container(
+//                                   margin: EdgeInsets.symmetric(
+//                                     horizontal: 5,
+//                                     vertical: 10,
+//                                   ),
+//                                   height: 90,
+//                                   width: 250,
+//                                   decoration: BoxDecoration(
+//                                     color: Theme.of(context).cardColor,
+//                                     borderRadius: BorderRadius.circular(10),
+//                                   ),
+//                                 ),
+//                               ],
+//                             );
+//                           }),
+//                         ),
+//                       ),
+//                     )
+//                   : _displayedEvents.isEmpty
+//                   ? Center(
+//                       child: Text(
+//                         context.tr.noPostsFound,
+//                         style: TextStyle(color: Colors.grey),
+//                       ),
+//                     )
+//                   : RefreshIndicator(
+//                       onRefresh: _refresh,
+//                       color: Theme.of(context).primaryColor,
+//                       backgroundColor: Theme.of(
+//                         context,
+//                       ).scaffoldBackgroundColor,
+//                       child: ListView.separated(
+//                         controller: _scrollController,
+//                         physics: const AlwaysScrollableScrollPhysics(),
+//                         itemCount: _displayedEvents.length + 1,
+//                         separatorBuilder: (ctx, i) => const Divider(
+//                           color: Color.fromARGB(0, 158, 158, 158),
+//                           height: 0,
+//                           thickness: 0.5,
+//                         ),
+//                         itemBuilder: (context, index) {
+//                           if (index >= _displayedEvents.length) {
+//                             return _isLoading
+//                                 ? const Padding(
+//                                     padding: EdgeInsets.all(16.0),
+//                                     child: Center(
+//                                       child: CircularProgressIndicator(),
+//                                     ),
+//                                   )
+//                                 : const SizedBox(height: 50);
+//                           }
+
+//                           final r = _displayedEvents[index];
+//                           return Container(
+//                             margin: const EdgeInsets.symmetric(
+//                               vertical: 2,
+//                               horizontal: 9,
+//                             ),
+//                             decoration: BoxDecoration(
+//                               color: Theme.of(context).cardColor,
+//                               boxShadow: [
+//                                 BoxShadow(
+//                                   color: Colors.black.withOpacity(0.1),
+//                                   blurRadius: 4,
+//                                   offset: const Offset(0, 2),
+//                                 ),
+//                               ],
+//                             ),
+//                             child: Column(
+//                               crossAxisAlignment:
+//                                         CrossAxisAlignment.start,
+//                               children: [
+//                                 // Header (Organizer)
+//                                 Padding(
+//                                   padding: const EdgeInsets.symmetric(
+//                                     horizontal: 16.0,
+//                                     vertical: 8.0,
+//                                   ),
+//                                   child: Row(
+//                                     children: [
+//                                       r.organizer!.picture != null &&
+//                                               r.organizer!.picture!.isNotEmpty
+//                                           ? CircleAvatar(
+//                                               radius: 25,
+//                                               backgroundImage: NetworkImage(
+//                                                 r.organizer!.picture!,
+//                                               ),
+//                                               backgroundColor: Theme.of(
+//                                                 context,
+//                                               ).primaryColor,
+//                                             )
+//                                           : CircleAvatar(
+//                                               radius: 25,
+//                                               backgroundColor: Theme.of(
+//                                                 context,
+//                                               ).primaryColor,
+//                                               child: Center(
+//                                                 child: Text(
+//                                                   r
+//                                                               .organizer!
+//                                                               .name
+//                                                               ?.isNotEmpty ==
+//                                                           true
+//                                                       ? r.organizer!.name![0]
+//                                                             .toUpperCase()
+//                                                       : '?',
+//                                                   style: TextStyle(
+//                                                     color: Colors.white,
+//                                                     fontSize: 20,
+//                                                     fontWeight: FontWeight.bold,
+//                                                   ),
+//                                                 ),
+//                                               ),
+//                                             ),
+//                                       const SizedBox(width: 12),
+//                                       Expanded(
+//                                         child: Column(
+//                                           crossAxisAlignment:
+//                                               CrossAxisAlignment.start,
+//                                           children: [
+//                                             Text(
+//                                               r.organizer!.name!,
+//                                               style: TextStyle(
+//                                                 fontWeight: FontWeight.bold,
+//                                                 fontSize: 18,
+//                                                 color: Theme.of(
+//                                                   context,
+//                                                 ).textTheme.titleMedium?.color,
+//                                               ),
+//                                             ),
+//                                             const SizedBox(height: 4),
+//                                             Row(
+//                                               children: [
+//                                                 Text(
+//                                                   r
+//                                                       .organizer!
+//                                                       .typeBusiness!
+//                                                       .name!,
+//                                                   style: TextStyle(
+//                                                     color: Theme.of(context)
+//                                                         .textTheme
+//                                                         .bodyMedium
+//                                                         ?.color,
+//                                                     fontSize: 14,
+//                                                   ),
+//                                                 ),
+//                                                 Text(
+//                                                   ". ${timeago.format(r.createdAt!)}",
+//                                                   style: TextStyle(
+//                                                     color: Theme.of(context)
+//                                                         .textTheme
+//                                                         .bodyMedium
+//                                                         ?.color,
+//                                                     fontSize: 12,
+//                                                   ),
+//                                                 ),
+//                                                 const SizedBox(width: 8),
+//                                                 Icon(
+//                                                   Icons.public,
+//                                                   size: 14,
+//                                                   color: Theme.of(
+//                                                     context,
+//                                                   ).textTheme.bodyMedium?.color,
+//                                                 ),
+//                                               ],
+//                                             ),
+//                                           ],
+//                                         ),
+//                                       ),
+//                                       IconButton(
+//                                         icon: Icon(
+//                                           Icons.more_vert,
+//                                           color: Theme.of(
+//                                             context,
+//                                           ).textTheme.bodyMedium?.color,
+//                                         ),
+//                                         onPressed: () async {
+//                                           final selected =
+//                                               await showMenu<String>(
+//                                                 context: context,
+//                                                 position:
+//                                                     const RelativeRect.fromLTRB(
+//                                                       1000,
+//                                                       100,
+//                                                       0,
+//                                                       0,
+//                                                     ),
+//                                                 items: const [
+//                                                   PopupMenuItem(
+//                                                     value: 'report',
+//                                                     child: Row(
+//                                                       children: [
+//                                                         Icon(
+//                                                           Icons.flag_outlined,
+//                                                           size: 18,
+//                                                         ),
+//                                                         SizedBox(width: 8),
+//                                                         Text('Report Post'),
+//                                                       ],
+//                                                     ),
+//                                                   ),
+//                                                 ],
+//                                               );
+
+//                                           if (selected == 'report') {
+//                                             await bottomshetReportPost(context, r.id!);
+//                                           }
+//                                         },
+//                                       ),
+//                                     ],
+//                                   ),
+//                                 ),
+
+//                                 // Images
+//                                 // MultipleImageWidget(
+//                                 //   imageUrls: r.images ?? [],
+//                                 //   mainTitle: r.title!,
+//                                 //   mainSubtitle: r.description!,
+//                                 //   showFeatured: false,
+//                                 //   height: 250,
+//                                 //   spacing: 4,
+//                                 //   borderRadius: 0,
+//                                 // ),
+//                                MultipleImageWidget(
+//                                     imageUrls: r.images ?? [],
+//                                     mainTitle: r.title ?? '',
+//                                     mainSubtitle: r.description ?? '',
+//                                     showFeatured: false,
+//                                     height: 250,
+//                                     spacing: 4,
+//                                     borderRadius: 0,
+//                                     onImageTap: (index) {
+//                                       final urls = (r.images ?? [])
+//                                           .map((img) => img.image ?? '')
+//                                           .where((u) => u.isNotEmpty)
+//                                           .toList();
+//                                       _openImageViewer(
+//                                         context,
+//                                         images: urls,
+//                                         initialIndex: index,
+//                                         title: r.title ?? '',
+//                                       );
+//                                     },
+//                                   ),
+
+//                                 // Event Text Details
+//                                 Padding(
+//                                   padding: const EdgeInsets.only(
+//                                     left: 16.0,
+//                                     right: 16.0,
+//                                     top: 16.0,
+//                                   ),
+//                                   child: ReadMoreText(
+//                                     r.description!,
+//                                     trimMode: TrimMode.Line,
+//                                     trimLines: 2,
+//                                     colorClickableText: Theme.of(
+//                                       context,
+//                                     ).primaryColor,
+//                                     trimCollapsedText: 'Show more',
+//                                     trimExpandedText: 'Show less',
+//                                     moreStyle: TextStyle(
+//                                       fontSize: 14,
+//                                       fontWeight: FontWeight.bold,
+//                                       color: Theme.of(context).primaryColor,
+//                                     ),
+//                                   ),
+//                                 ),
+
+//                                 // Engagement Stats
+//                                 Padding(
+//                                   padding: const EdgeInsets.symmetric(
+//                                     horizontal: 16.0,
+//                                     vertical: 16.0,
+//                                   ),
+//                                   child: Row(
+//                                     children: [
+//                                       // Row(
+//                                       //   children: [
+//                                       //     r.isLiked
+//                                       //         ? Icon(
+//                                       //             Icons.favorite,
+//                                       //             color: Colors.red,
+//                                       //             size: 20,
+//                                       //           )
+//                                       //         : Icon(
+//                                       //             Icons.favorite_border,
+//                                       //             color: Theme.of(context)
+//                                       //                 .textTheme
+//                                       //                 .titleMedium
+//                                       //                 ?.color,
+//                                       //             size: 20,
+//                                       //           ),
+//                                       //     const SizedBox(width: 6),
+//                                       //     Text(
+//                                       //       "${r.likeCount} ${context.tr.likes}",
+//                                       //       style: const TextStyle(
+//                                       //         fontSize: 12,
+//                                       //       ),
+//                                       //     ),
+//                                       //   ],
+//                                       // ),
+//                                       Row(
+//   children: [
+//     AnimatedSwitcher(
+//       duration: const Duration(milliseconds: 200),
+//       transitionBuilder: (child, anim) =>
+//           ScaleTransition(scale: anim, child: child),
+//       child: Icon(
+//         _isLiked(r) ? Icons.favorite : Icons.favorite_border,
+//         key: ValueKey(_isLiked(r)),
+//         color: _isLiked(r)
+//             ? Colors.red
+//             : Theme.of(context).textTheme.titleMedium?.color,
+//         size: 20,
+//       ),
+//     ),
+//     const SizedBox(width: 6),
+//     Text(
+//       "${_likeCount(r)} ${context.tr.likes}",
+//       style: const TextStyle(fontSize: 12),
+//     ),
+//   ],
+// ),
+//                                       const Spacer(),
+//                                       Text(
+//                                         "${r.commentCount} ${context.tr.comments}",
+//                                         style: const TextStyle(fontSize: 12),
+//                                       ),
+//                                       const Spacer(),
+//                                       Text(
+//                                         "${r.shareCount} ${context.tr.shares}",
+//                                         style: const TextStyle(fontSize: 12),
+//                                       ),
+//                                     ],
+//                                   ),
+//                                 ),
+//                                 const Divider(height: 1, thickness: 0.5),
+
+//                                 // Action Buttons
+//                                 Padding(
+//                                   padding: const EdgeInsets.symmetric(
+//                                     horizontal: 16.0,
+//                                     vertical: 8.0,
+//                                   ),
+//                                   child: Row(
+//                                     mainAxisAlignment:
+//                                         MainAxisAlignment.spaceEvenly,
+//                                     children: [
+//                                      TextButton.icon(
+//                                     onPressed: () => _onLikeTapped(r),
+//                                     icon: Icon(
+//                                       _isLiked(r) ? Icons.favorite : Icons.favorite_border,
+//                                       color: _isLiked(r)
+//                                           ? Colors.red
+//                                           : Theme.of(context).textTheme.titleMedium?.color,
+//                                       size: 20,
+//                                     ),
+//                                     label: Text(
+//                                       context.tr.like,
+//                                       style: TextStyle(
+//                                         color: _isLiked(r)
+//                                             ? Colors.red
+//                                             : Theme.of(context).textTheme.titleMedium?.color,
+//                                         fontWeight: _isLiked(r) ? FontWeight.w600 : FontWeight.normal,
+//                                       ),
+//                                     ),
+//                                   ),
+//                                       const VerticalDivider(
+//                                         width: 1,
+//                                         indent: 8,
+//                                         endIndent: 8,
+//                                       ),
+//                                       TextButton.icon(
+//                                         onPressed: () {
+//                                           showModalBottomSheet(
+//                                             context: context,
+//                                             isScrollControlled: true,
+//                                             backgroundColor: Colors.transparent,
+//                                             enableDrag: true,
+//                                             isDismissible: true,
+//                                             builder: (context) =>
+//                                                 CommentsBottomSheet(
+//                                                   eventId: r.id!,
+//                                                 ),
+//                                           );
+//                                         },
+//                                         icon: Icon(
+//                                           Icons.comment_outlined,
+//                                           color: Theme.of(
+//                                             context,
+//                                           ).textTheme.titleMedium?.color,
+//                                           size: 20,
+//                                         ),
+//                                         label: Text(
+//                                           context.tr.comment,
+//                                           style: TextStyle(
+//                                             color: Theme.of(
+//                                               context,
+//                                             ).textTheme.titleMedium?.color,
+//                                           ),
+//                                         ),
+//                                       ),
+//                                       const VerticalDivider(
+//                                         width: 1,
+//                                         indent: 8,
+//                                         endIndent: 8,
+//                                       ),
+//                                       // TextButton.icon(
+//                                       //   onPressed: () {
+//                                       //     print('Start share');
+//                                       //     shareEvent(r.id!);
+//                                       //   },
+//                                       //   icon: Icon(
+//                                       //     Icons.share_outlined,
+//                                       //     color: Theme.of(
+//                                       //       context,
+//                                       //     ).textTheme.titleMedium?.color,
+//                                       //     size: 20,
+//                                       //   ),
+//                                       //   label: Text(
+//                                       //     context.tr.share,
+//                                       //     style: TextStyle(
+//                                       //       color: Theme.of(
+//                                       //         context,
+//                                       //       ).textTheme.titleMedium?.color,
+//                                       //     ),
+//                                       //   ),
+//                                       // ),
+//                                       TextButton.icon(
+//   onPressed: () async {
+//     try {
+//       debugPrint('Start share for event id=${r.id}');
+//       await shareEvent(r.id!);
+//       if (!context.mounted) return;
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         const SnackBar(content: Text('Share sheet opened')),
+//       );
+//     } catch (e, st) {
+//       debugPrint('Share failed: $e\n$st');
+//       print('Share failed: $e');
+//       if (!context.mounted) return;
+//       ScaffoldMessenger.of(context).showSnackBar(
+//         SnackBar(
+//           content: Text('Share failed: $e'),
+//           backgroundColor: Colors.black,
+//         ),
+//       );
+//     }
+//   },
+//   icon: Icon(
+//     Icons.share_outlined,
+//     color: Theme.of(context).textTheme.titleMedium?.color,
+//     size: 20,
+//   ),
+//   label: Text(
+//     context.tr.share,
+//     style: TextStyle(
+//       color: Theme.of(context).textTheme.titleMedium?.color,
+//     ),
+//   ),
+// ),
+//                                     ],
+//                                   ),
+//                                 ),
+//                               ],
+//                             ),
+//                           );
+//                         },
+//                       ),
+//                     ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+
+@override
+Widget build(BuildContext context) {
+  return Scaffold(
+    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+    body: SafeArea(
+      child: RefreshIndicator(
+        onRefresh: _refresh,
+        color: Theme.of(context).primaryColor,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        child: CustomScrollView(
+          controller: _scrollController,
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            // --- FILTER DROPDOWN & TITLE ---
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12.0,
+                  vertical: 8.0,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      context.tr.events,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
                       ),
-                      DropdownMenuItem(
-                        value: 'popularity',
-                        child: Text(context.tr.byPopularity),
+                    ),
+                    DropdownButton<String>(
+                      value: _currentSort,
+                      dropdownColor: Theme.of(context).cardColor,
+                      icon: Icon(
+                        Icons.filter_list,
+                        color: Theme.of(context).primaryColor,
                       ),
-                    ],
-                    onChanged: _changeSort,
-                  ),
-                ],
+                      underline: const SizedBox(),
+                      style: TextStyle(
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                        fontSize: 14,
+                      ),
+                      items: [
+                        DropdownMenuItem(
+                          value: 'date',
+                          child: Text(context.tr.byDate),
+                        ),
+                        DropdownMenuItem(
+                          value: 'popularity',
+                          child: Text(context.tr.byPopularity),
+                        ),
+                      ],
+                      onChanged: _changeSort,
+                    ),
+                  ],
+                ),
               ),
             ),
 
-            // --- MAIN LIST ---
-            Expanded(
-              child: _isLoading && _allEvents.isEmpty
-                  ? const Center(child: CircularProgressIndicator())
-                  : _errorMessage != null && _allEvents.isEmpty
-                  ? Container(
-                      margin: EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 5,
-                      ),
-                      height: 270,
-                      child: Shimmer.fromColors(
-                        baseColor: Theme.of(context).cardColor,
-                        highlightColor: Theme.of(
-                          context,
-                        ).cardColor.withOpacity(0.5),
-                        enabled: true,
-                        child: ListView.builder(
-                          itemCount: 4,
-                          physics: const NeverScrollableScrollPhysics(),
-                          scrollDirection: Axis.vertical,
-                          itemBuilder: ((context, index) {
-                            return Column(
+            // --- MAIN LIST STATES ---
+            if (_isLoading && _allEvents.isEmpty)
+              // Loading State
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (_errorMessage != null && _allEvents.isEmpty)
+              // Error State (Shimmer)
+              SliverToBoxAdapter(
+                child: Container(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 5,
+                  ),
+                  height: 270,
+                  child: Shimmer.fromColors(
+                    baseColor: Theme.of(context).cardColor,
+                    highlightColor:
+                        Theme.of(context).cardColor.withOpacity(0.5),
+                    enabled: true,
+                    child: ListView.builder(
+                      itemCount: 4,
+                      physics: const NeverScrollableScrollPhysics(),
+                      scrollDirection: Axis.vertical,
+                      itemBuilder: (context, index) {
+                        return Column(
+                          children: [
+                            Row(
                               children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      margin: EdgeInsets.symmetric(
-                                        horizontal: 5,
-                                        vertical: 10,
-                                      ),
-                                      height: 60,
-                                      width: 60,
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).cardColor,
-                                        borderRadius: BorderRadius.circular(70),
-                                      ),
-                                    ),
-                                    Column(
-                                      children: [
-                                        Container(
-                                          margin: EdgeInsets.symmetric(
-                                            horizontal: 5,
-                                            vertical: 10,
-                                          ),
-                                          height: 30,
-                                          width: 180,
-                                          decoration: BoxDecoration(
-                                            color: Theme.of(context).cardColor,
-                                            borderRadius: BorderRadius.circular(
-                                              10,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
                                 Container(
-                                  margin: EdgeInsets.symmetric(
+                                  margin: const EdgeInsets.symmetric(
                                     horizontal: 5,
                                     vertical: 10,
                                   ),
-                                  height: 90,
-                                  width: 250,
+                                  height: 60,
+                                  width: 60,
                                   decoration: BoxDecoration(
                                     color: Theme.of(context).cardColor,
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius: BorderRadius.circular(70),
                                   ),
                                 ),
-                              ],
-                            );
-                          }),
-                        ),
-                      ),
-                    )
-                  : _displayedEvents.isEmpty
-                  ? Center(
-                      child: Text(
-                        context.tr.noPostsFound,
-                        style: TextStyle(color: Colors.grey),
-                      ),
-                    )
-                  : RefreshIndicator(
-                      onRefresh: _refresh,
-                      color: Theme.of(context).primaryColor,
-                      backgroundColor: Theme.of(
-                        context,
-                      ).scaffoldBackgroundColor,
-                      child: ListView.separated(
-                        controller: _scrollController,
-                        physics: const AlwaysScrollableScrollPhysics(),
-                        itemCount: _displayedEvents.length + 1,
-                        separatorBuilder: (ctx, i) => const Divider(
-                          color: Color.fromARGB(0, 158, 158, 158),
-                          height: 0,
-                          thickness: 0.5,
-                        ),
-                        itemBuilder: (context, index) {
-                          if (index >= _displayedEvents.length) {
-                            return _isLoading
-                                ? const Padding(
-                                    padding: EdgeInsets.all(16.0),
-                                    child: Center(
-                                      child: CircularProgressIndicator(),
+                                Column(
+                                  children: [
+                                    Container(
+                                      margin: const EdgeInsets.symmetric(
+                                        horizontal: 5,
+                                        vertical: 10,
+                                      ),
+                                      height: 30,
+                                      width: 180,
+                                      decoration: BoxDecoration(
+                                        color: Theme.of(context).cardColor,
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
                                     ),
-                                  )
-                                : const SizedBox(height: 50);
-                          }
-
-                          final r = _displayedEvents[index];
-                          return Container(
-                            margin: const EdgeInsets.symmetric(
-                              vertical: 2,
-                              horizontal: 9,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Theme.of(context).cardColor,
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
+                                  ],
                                 ),
                               ],
                             ),
-                            child: Column(
-                              crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                            Container(
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 5,
+                                vertical: 10,
+                              ),
+                              height: 90,
+                              width: 250,
+                              decoration: BoxDecoration(
+                                color: Theme.of(context).cardColor,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                ),
+              )
+            else if (_displayedEvents.isEmpty)
+              // Empty State
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: Text(
+                    context.tr.noPostsFound,
+                    style: const TextStyle(color: Colors.grey),
+                  ),
+                ),
+              )
+            else
+              // --- EVENT LIST ---
+              SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    // Loading indicator at the bottom
+                    if (index >= _displayedEvents.length) {
+                      return _isLoading
+                          ? const Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            )
+                          : const SizedBox(height: 50);
+                    }
+
+                    final r = _displayedEvents[index];
+                    return Container(
+                      margin: const EdgeInsets.symmetric(
+                        vertical: 2,
+                        horizontal: 9,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Theme.of(context).cardColor,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header (Organizer)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 8.0,
+                            ),
+                            child: Row(
                               children: [
-                                // Header (Organizer)
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16.0,
-                                    vertical: 8.0,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      r.organizer!.picture != null &&
-                                              r.organizer!.picture!.isNotEmpty
-                                          ? CircleAvatar(
-                                              radius: 25,
-                                              backgroundImage: NetworkImage(
-                                                r.organizer!.picture!,
-                                              ),
-                                              backgroundColor: Theme.of(
-                                                context,
-                                              ).primaryColor,
-                                            )
-                                          : CircleAvatar(
-                                              radius: 25,
-                                              backgroundColor: Theme.of(
-                                                context,
-                                              ).primaryColor,
-                                              child: Center(
-                                                child: Text(
-                                                  r
-                                                              .organizer!
-                                                              .name
-                                                              ?.isNotEmpty ==
-                                                          true
-                                                      ? r.organizer!.name![0]
-                                                            .toUpperCase()
-                                                      : '?',
-                                                  style: TextStyle(
-                                                    color: Colors.white,
-                                                    fontSize: 20,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                            ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              r.organizer!.name!,
-                                              style: TextStyle(
-                                                fontWeight: FontWeight.bold,
-                                                fontSize: 18,
-                                                color: Theme.of(
-                                                  context,
-                                                ).textTheme.titleMedium?.color,
-                                              ),
-                                            ),
-                                            const SizedBox(height: 4),
-                                            Row(
-                                              children: [
-                                                Text(
-                                                  r
-                                                      .organizer!
-                                                      .typeBusiness!
-                                                      .name!,
-                                                  style: TextStyle(
-                                                    color: Theme.of(context)
-                                                        .textTheme
-                                                        .bodyMedium
-                                                        ?.color,
-                                                    fontSize: 14,
-                                                  ),
-                                                ),
-                                                Text(
-                                                  ". ${timeago.format(r.createdAt!)}",
-                                                  style: TextStyle(
-                                                    color: Theme.of(context)
-                                                        .textTheme
-                                                        .bodyMedium
-                                                        ?.color,
-                                                    fontSize: 12,
-                                                  ),
-                                                ),
-                                                const SizedBox(width: 8),
-                                                Icon(
-                                                  Icons.public,
-                                                  size: 14,
-                                                  color: Theme.of(
-                                                    context,
-                                                  ).textTheme.bodyMedium?.color,
-                                                ),
-                                              ],
-                                            ),
-                                          ],
+                                r.organizer!.picture != null &&
+                                        r.organizer!.picture!.isNotEmpty
+                                    ? CircleAvatar(
+                                        radius: 25,
+                                        backgroundImage: NetworkImage(
+                                          r.organizer!.picture!,
                                         ),
-                                      ),
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.more_vert,
-                                          color: Theme.of(
-                                            context,
-                                          ).textTheme.bodyMedium?.color,
-                                        ),
-                                        onPressed: () async {
-                                          final selected =
-                                              await showMenu<String>(
-                                                context: context,
-                                                position:
-                                                    const RelativeRect.fromLTRB(
-                                                      1000,
-                                                      100,
-                                                      0,
-                                                      0,
-                                                    ),
-                                                items: const [
-                                                  PopupMenuItem(
-                                                    value: 'report',
-                                                    child: Row(
-                                                      children: [
-                                                        Icon(
-                                                          Icons.flag_outlined,
-                                                          size: 18,
-                                                        ),
-                                                        SizedBox(width: 8),
-                                                        Text('Report Post'),
-                                                      ],
-                                                    ),
-                                                  ),
-                                                ],
-                                              );
-
-                                          if (selected == 'report') {
-                                            await bottomshetReportPost(context, r.id!);
-                                          }
-                                        },
-                                      ),
-                                    ],
-                                  ),
-                                ),
-
-                                // Images
-                                // MultipleImageWidget(
-                                //   imageUrls: r.images ?? [],
-                                //   mainTitle: r.title!,
-                                //   mainSubtitle: r.description!,
-                                //   showFeatured: false,
-                                //   height: 250,
-                                //   spacing: 4,
-                                //   borderRadius: 0,
-                                // ),
-                               MultipleImageWidget(
-                                    imageUrls: r.images ?? [],
-                                    mainTitle: r.title ?? '',
-                                    mainSubtitle: r.description ?? '',
-                                    showFeatured: false,
-                                    height: 250,
-                                    spacing: 4,
-                                    borderRadius: 0,
-                                    onImageTap: (index) {
-                                      final urls = (r.images ?? [])
-                                          .map((img) => img.image ?? '')
-                                          .where((u) => u.isNotEmpty)
-                                          .toList();
-                                      _openImageViewer(
-                                        context,
-                                        images: urls,
-                                        initialIndex: index,
-                                        title: r.title ?? '',
-                                      );
-                                    },
-                                  ),
-
-                                // Event Text Details
-                                Padding(
-                                  padding: const EdgeInsets.only(
-                                    left: 16.0,
-                                    right: 16.0,
-                                    top: 16.0,
-                                  ),
-                                  child: ReadMoreText(
-                                    r.description!,
-                                    trimMode: TrimMode.Line,
-                                    trimLines: 2,
-                                    colorClickableText: Theme.of(
-                                      context,
-                                    ).primaryColor,
-                                    trimCollapsedText: 'Show more',
-                                    trimExpandedText: 'Show less',
-                                    moreStyle: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.bold,
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                                  ),
-                                ),
-
-                                // Engagement Stats
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16.0,
-                                    vertical: 16.0,
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      // Row(
-                                      //   children: [
-                                      //     r.isLiked
-                                      //         ? Icon(
-                                      //             Icons.favorite,
-                                      //             color: Colors.red,
-                                      //             size: 20,
-                                      //           )
-                                      //         : Icon(
-                                      //             Icons.favorite_border,
-                                      //             color: Theme.of(context)
-                                      //                 .textTheme
-                                      //                 .titleMedium
-                                      //                 ?.color,
-                                      //             size: 20,
-                                      //           ),
-                                      //     const SizedBox(width: 6),
-                                      //     Text(
-                                      //       "${r.likeCount} ${context.tr.likes}",
-                                      //       style: const TextStyle(
-                                      //         fontSize: 12,
-                                      //       ),
-                                      //     ),
-                                      //   ],
-                                      // ),
-                                      Row(
-  children: [
-    AnimatedSwitcher(
-      duration: const Duration(milliseconds: 200),
-      transitionBuilder: (child, anim) =>
-          ScaleTransition(scale: anim, child: child),
-      child: Icon(
-        _isLiked(r) ? Icons.favorite : Icons.favorite_border,
-        key: ValueKey(_isLiked(r)),
-        color: _isLiked(r)
-            ? Colors.red
-            : Theme.of(context).textTheme.titleMedium?.color,
-        size: 20,
-      ),
-    ),
-    const SizedBox(width: 6),
-    Text(
-      "${_likeCount(r)} ${context.tr.likes}",
-      style: const TextStyle(fontSize: 12),
-    ),
-  ],
-),
-                                      const Spacer(),
-                                      Text(
-                                        "${r.commentCount} ${context.tr.comments}",
-                                        style: const TextStyle(fontSize: 12),
-                                      ),
-                                      const Spacer(),
-                                      Text(
-                                        "${r.shareCount} ${context.tr.shares}",
-                                        style: const TextStyle(fontSize: 12),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                const Divider(height: 1, thickness: 0.5),
-
-                                // Action Buttons
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 16.0,
-                                    vertical: 8.0,
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceEvenly,
-                                    children: [
-                                     TextButton.icon(
-                                    onPressed: () => _onLikeTapped(r),
-                                    icon: Icon(
-                                      _isLiked(r) ? Icons.favorite : Icons.favorite_border,
-                                      color: _isLiked(r)
-                                          ? Colors.red
-                                          : Theme.of(context).textTheme.titleMedium?.color,
-                                      size: 20,
-                                    ),
-                                    label: Text(
-                                      context.tr.like,
-                                      style: TextStyle(
-                                        color: _isLiked(r)
-                                            ? Colors.red
-                                            : Theme.of(context).textTheme.titleMedium?.color,
-                                        fontWeight: _isLiked(r) ? FontWeight.w600 : FontWeight.normal,
-                                      ),
-                                    ),
-                                  ),
-                                      const VerticalDivider(
-                                        width: 1,
-                                        indent: 8,
-                                        endIndent: 8,
-                                      ),
-                                      TextButton.icon(
-                                        onPressed: () {
-                                          showModalBottomSheet(
-                                            context: context,
-                                            isScrollControlled: true,
-                                            backgroundColor: Colors.transparent,
-                                            enableDrag: true,
-                                            isDismissible: true,
-                                            builder: (context) =>
-                                                CommentsBottomSheet(
-                                                  eventId: r.id!,
-                                                ),
-                                          );
-                                        },
-                                        icon: Icon(
-                                          Icons.comment_outlined,
-                                          color: Theme.of(
-                                            context,
-                                          ).textTheme.titleMedium?.color,
-                                          size: 20,
-                                        ),
-                                        label: Text(
-                                          context.tr.comment,
-                                          style: TextStyle(
-                                            color: Theme.of(
-                                              context,
-                                            ).textTheme.titleMedium?.color,
+                                        backgroundColor:
+                                            Theme.of(context).primaryColor,
+                                      )
+                                    : CircleAvatar(
+                                        radius: 25,
+                                        backgroundColor:
+                                            Theme.of(context).primaryColor,
+                                        child: Center(
+                                          child: Text(
+                                            r.organizer!.name?.isNotEmpty ==
+                                                    true
+                                                ? r.organizer!.name![0]
+                                                    .toUpperCase()
+                                                : '?',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                      const VerticalDivider(
-                                        width: 1,
-                                        indent: 8,
-                                        endIndent: 8,
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        r.organizer!.name!,
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 18,
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.color,
+                                        ),
                                       ),
-                                      // TextButton.icon(
-                                      //   onPressed: () {
-                                      //     print('Start share');
-                                      //     shareEvent(r.id!);
-                                      //   },
-                                      //   icon: Icon(
-                                      //     Icons.share_outlined,
-                                      //     color: Theme.of(
-                                      //       context,
-                                      //     ).textTheme.titleMedium?.color,
-                                      //     size: 20,
-                                      //   ),
-                                      //   label: Text(
-                                      //     context.tr.share,
-                                      //     style: TextStyle(
-                                      //       color: Theme.of(
-                                      //         context,
-                                      //       ).textTheme.titleMedium?.color,
-                                      //     ),
-                                      //   ),
-                                      // ),
-                                      TextButton.icon(
-  onPressed: () async {
-    try {
-      debugPrint('Start share for event id=${r.id}');
-      await shareEvent(r.id!);
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Share sheet opened')),
-      );
-    } catch (e, st) {
-      debugPrint('Share failed: $e\n$st');
-      print('Share failed: $e');
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Share failed: $e'),
-          backgroundColor: Colors.black,
-        ),
-      );
-    }
-  },
-  icon: Icon(
-    Icons.share_outlined,
-    color: Theme.of(context).textTheme.titleMedium?.color,
-    size: 20,
-  ),
-  label: Text(
-    context.tr.share,
-    style: TextStyle(
-      color: Theme.of(context).textTheme.titleMedium?.color,
-    ),
-  ),
-),
+                                      const SizedBox(height: 4),
+                                      Row(
+                                        children: [
+                                          Text(
+                                            r.organizer!.typeBusiness!.name!,
+                                            style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.color,
+                                              fontSize: 14,
+                                            ),
+                                          ),
+                                          Text(
+                                            ". ${timeago.format(r.createdAt!)}",
+                                            style: TextStyle(
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.color,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Icon(
+                                            Icons.public,
+                                            size: 14,
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .bodyMedium
+                                                ?.color,
+                                          ),
+                                        ],
+                                      ),
                                     ],
+                                  ),
+                                ),
+                                IconButton(
+                                  icon: Icon(
+                                    Icons.more_vert,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .bodyMedium
+                                        ?.color,
+                                  ),
+                                  onPressed: () async {
+                                    final selected = await showMenu<String>(
+                                      context: context,
+                                      position:
+                                          const RelativeRect.fromLTRB(
+                                            1000,
+                                            100,
+                                            0,
+                                            0,
+                                          ),
+                                      items: const [
+                                        PopupMenuItem(
+                                          value: 'report',
+                                          child: Row(
+                                            children: [
+                                              Icon(
+                                                Icons.flag_outlined,
+                                                size: 18,
+                                              ),
+                                              SizedBox(width: 8),
+                                              Text('Report Post'),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    );
+
+                                    if (selected == 'report') {
+                                      await bottomshetReportPost(
+                                          context, r.id!);
+                                    }
+                                  },
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          // Images
+                          MultipleImageWidget(
+                            imageUrls: r.images ?? [],
+                            mainTitle: r.title ?? '',
+                            mainSubtitle: r.description ?? '',
+                            showFeatured: false,
+                            height: 250,
+                            spacing: 4,
+                            borderRadius: 0,
+                            onImageTap: (index) {
+                              final urls = (r.images ?? [])
+                                  .map((img) => img.image ?? '')
+                                  .where((u) => u.isNotEmpty)
+                                  .toList();
+                              _openImageViewer(
+                                context,
+                                images: urls,
+                                initialIndex: index,
+                                title: r.title ?? '',
+                              );
+                            },
+                          ),
+
+                          // Event Text Details
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 16.0,
+                              right: 16.0,
+                              top: 16.0,
+                            ),
+                            child: ReadMoreText(
+                              r.description!,
+                              trimMode: TrimMode.Line,
+                              trimLines: 2,
+                              colorClickableText:
+                                  Theme.of(context).primaryColor,
+                              trimCollapsedText: 'Show more',
+                              trimExpandedText: 'Show less',
+                              moreStyle: TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: Theme.of(context).primaryColor,
+                              ),
+                            ),
+                          ),
+
+                          // Engagement Stats
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 16.0,
+                            ),
+                            child: Row(
+                              children: [
+                                Row(
+                                  children: [
+                                    AnimatedSwitcher(
+                                      duration: const Duration(
+                                          milliseconds: 200),
+                                      transitionBuilder: (child, anim) =>
+                                          ScaleTransition(
+                                              scale: anim, child: child),
+                                      child: Icon(
+                                        _isLiked(r)
+                                            ? Icons.favorite
+                                            : Icons.favorite_border,
+                                        key: ValueKey(_isLiked(r)),
+                                        color: _isLiked(r)
+                                            ? Colors.red
+                                            : Theme.of(context)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.color,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      "${_likeCount(r)} ${context.tr.likes}",
+                                      style: const TextStyle(fontSize: 12),
+                                    ),
+                                  ],
+                                ),
+                                const Spacer(),
+                                Text(
+                                  "${r.commentCount} ${context.tr.comments}",
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                                const Spacer(),
+                                Text(
+                                  "${r.shareCount} ${context.tr.shares}",
+                                  style: const TextStyle(fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Divider(height: 1, thickness: 0.5),
+
+                          // Action Buttons
+                          Padding(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 8.0,
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                              children: [
+                                TextButton.icon(
+                                  onPressed: () => _onLikeTapped(r),
+                                  icon: Icon(
+                                    _isLiked(r)
+                                        ? Icons.favorite
+                                        : Icons.favorite_border,
+                                    color: _isLiked(r)
+                                        ? Colors.red
+                                        : Theme.of(context)
+                                            .textTheme
+                                            .titleMedium
+                                            ?.color,
+                                    size: 20,
+                                  ),
+                                  label: Text(
+                                    context.tr.like,
+                                    style: TextStyle(
+                                      color: _isLiked(r)
+                                          ? Colors.red
+                                          : Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.color,
+                                      fontWeight: _isLiked(r)
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
+                                    ),
+                                  ),
+                                ),
+                                const VerticalDivider(
+                                  width: 1,
+                                  indent: 8,
+                                  endIndent: 8,
+                                ),
+                                TextButton.icon(
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      enableDrag: true,
+                                      isDismissible: true,
+                                      builder: (context) =>
+                                          CommentsBottomSheet(
+                                        eventId: r.id!,
+                                      ),
+                                    );
+                                  },
+                                  icon: Icon(
+                                    Icons.comment_outlined,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.color,
+                                    size: 20,
+                                  ),
+                                  label: Text(
+                                    context.tr.comment,
+                                    style: TextStyle(
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.color,
+                                    ),
+                                  ),
+                                ),
+                                const VerticalDivider(
+                                  width: 1,
+                                  indent: 8,
+                                  endIndent: 8,
+                                ),
+                                TextButton.icon(
+                                  onPressed: () async {
+                                    try {
+                                      debugPrint(
+                                          'Start share for event id=${r.id}');
+                                      await shareEvent(r.id!);
+                                      if (!context.mounted) return;
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        const SnackBar(
+                                            content:
+                                                Text('Share sheet opened')),
+                                      );
+                                    } catch (e, st) {
+                                      debugPrint('Share failed: $e\n$st');
+                                      if (!context.mounted) return;
+                                      ScaffoldMessenger.of(context)
+                                          .showSnackBar(
+                                        SnackBar(
+                                          content: Text('Share failed: $e'),
+                                          backgroundColor: Colors.black,
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  icon: Icon(
+                                    Icons.share_outlined,
+                                    color: Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.color,
+                                    size: 20,
+                                  ),
+                                  label: Text(
+                                    context.tr.share,
+                                    style: TextStyle(
+                                      color: Theme.of(context)
+                                          .textTheme
+                                          .titleMedium
+                                          ?.color,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          );
-                        },
+                          ),
+                        ],
                       ),
-                    ),
-            ),
+                    );
+                  },
+                  // +1 for the loading footer
+                  childCount: _displayedEvents.length + 1,
+                ),
+              ),
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   // --- Sidebar Drawer ---
   Widget _buildSidebar() {
