@@ -12,7 +12,7 @@ class Profile {
   final dynamic activity;
   final dynamic place;
   final String? picture;
-  final int? phoneNumber;
+  final String? phoneNumber;
   final String? email;
   final String? bio;
   final String? birthday;
@@ -40,7 +40,7 @@ class Profile {
       activity: json['activity'],
       place: json['place'],
       picture: json['picture'] as String?,
-      phoneNumber: json['phone_number'] as int?,
+      phoneNumber: json['phone_number'] as String?,
       email: json['email'] as String?,
       bio: json['bio'] as String?,
       birthday: json['birthday'] as String?,
@@ -75,7 +75,7 @@ class _ProfileShowScreenState extends State<ProfileShowScreen> {
   String? _errorMessage;
   Profile? _profile;
 
-  late final String _baseUrl = 'https://qopera.app';
+  late final String _baseUrl = 'http://192.168.1.115:8000 ';
 
   @override
   void initState() {

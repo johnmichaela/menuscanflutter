@@ -13,7 +13,7 @@ import 'package:ballon/l10n/app_strings.dart';
 //  CONFIG
 // ============================================================
 class ApiConfig {
-  static const String base = 'https://qopera.app';
+  static const String base = 'http://192.168.1.115:8000 ';
 
   /// Turn a possibly-relative media path into a full URL.
   static String absolute(String? path) {
@@ -706,7 +706,7 @@ class _ProfileQrCardState extends State<ProfileQrCard> {
           label,
           style: const TextStyle(
             fontSize: 13,
-            color: Color(0xFF64748B),
+            color: Color.fromARGB(255, 201, 202, 202),
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -718,7 +718,7 @@ class _ProfileQrCardState extends State<ProfileQrCard> {
             overflow: TextOverflow.ellipsis,
             style: const TextStyle(
               fontSize: 13,
-              color: Color(0xFF0F172A),
+              // color: Color(0xFF0F172A),
               fontWeight: FontWeight.w700,
             ),
           ),

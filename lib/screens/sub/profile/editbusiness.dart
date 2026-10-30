@@ -1,5 +1,6 @@
 
 import 'package:ballon/createprofile.dart';
+import 'package:ballon/models/country.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
@@ -62,7 +63,8 @@ class Profile {
   final dynamic place;
   final String? picture;
   final String? banner;
-  final int? phoneNumber;
+  final String? phoneNumber;
+  final String? countryCode;
   final String? email;
   final String? bio;
   final String? birthday;
@@ -77,6 +79,7 @@ class Profile {
     this.place,
     this.picture,
     this.banner,
+    this.countryCode,
     this.phoneNumber,
     this.email,
     this.bio,
@@ -96,7 +99,8 @@ class Profile {
       place: json['place'],
       picture: json['picture'] as String?,
       banner: json['banner'] as String?,
-      phoneNumber: json['phone_number'] as int?,
+      phoneNumber: json['phone_number'] as String?,
+      countryCode: json['country_code'] as String?,
       email: json['email'] as String?,
       bio: json['bio'] as String?,
       birthday: json['birthday'] as String?,
@@ -167,19 +171,23 @@ class _EditProfileBusinessScreenState extends State<EditProfileBusinessScreen> {
   bool _isGettingLocation = false;
 
   late final String apiUrl;
-  static const String _baseUrl = 'https://qopera.app';
+  static const String _baseUrl = 'http://192.168.1.115:8000 ';
 
   // Cover & avatar sizing
   static const double _coverHeight = 220;
   static const double _avatarRadius = 55;
   static const double _avatarRing = 4;
   static const double _avatarTotal = (_avatarRadius + _avatarRing) * 2;
-
+  List<Country> _countries = [];
+  Country? _selectedCountry;
+  final TextEditingController _countryCodeController =
+    TextEditingController(text: '+255');
   @override
   void initState() {
     super.initState();
     _initializeControllers();
     _fetchBusinessTypes();
+    _loadCountries();
     _fetchProfile();
   }
 
@@ -196,6 +204,33 @@ class _EditProfileBusinessScreenState extends State<EditProfileBusinessScreen> {
   // ==========================================================
   //  FETCH BUSINESS TYPES
   // ==========================================================
+  Future<void> _loadCountries() async {
+  final list = await Country.load();
+
+  // Auto-detect from device locale
+  Country? detected;
+  try {
+    final locale = WidgetsBinding.instance.platformDispatcher.locale;
+    final code = locale.countryCode?.toUpperCase();
+    if (code != null) {
+      detected = list.firstWhere(
+        (c) => c.iso == code,
+        orElse: () => list.first,
+      );
+    }
+  } catch (_) {}
+
+  if (!mounted) return;
+  setState(() {
+    _countries = list;
+    // Keep currently chosen country if already set (e.g. from profile)
+    _selectedCountry ??= detected ??
+        (list.isNotEmpty ? list.first : null);
+    if (_selectedCountry != null && _countryCodeController.text.isEmpty) {
+      _countryCodeController.text = _selectedCountry!.dial;
+    }
+  });
+}
   Future<void> _fetchBusinessTypes() async {
     setState(() => _isLoadingTypes = true);
     try {
@@ -587,6 +622,7 @@ class _EditProfileBusinessScreenState extends State<EditProfileBusinessScreen> {
     _locationController.dispose();
     _bioController.dispose();
     _usernameController.dispose();
+    _countryCodeController.dispose();
     super.dispose();
   }
 
@@ -769,11 +805,12 @@ class _EditProfileBusinessScreenState extends State<EditProfileBusinessScreen> {
                                         : null,
                                   ),
                                   _buildDivider(),
-                                  _buildInputField(
-                                    label: context.tr.phoneNumber,
-                                    controller: _phoneController,
-                                    keyboardType: TextInputType.phone,
-                                  ),
+                                  _buildPhoneField(),
+                                  // _buildInputField(
+                                  //   label: context.tr.phoneNumber,
+                                  //   controller: _phoneController,
+                                  //   keyboardType: TextInputType.phone,
+                                  // ),
                                   _buildDivider(),
                                   // ---- Location with GPS button ----
                                   _buildLocationField(),
@@ -835,6 +872,112 @@ class _EditProfileBusinessScreenState extends State<EditProfileBusinessScreen> {
                 ),
     );
   }
+// ==========================================================
+//  PHONE FIELD WITH COUNTRY CODE + FLAG (left side)
+// ==========================================================
+Widget _buildPhoneField() {
+  return Padding(
+    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          context.tr.phoneNumber,
+          style: TextStyle(
+            fontSize: 12,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // ---- Country code + flag button (LEFT) ----
+            InkWell(
+              onTap: _countries.isEmpty ? null : _openCountryPicker,
+              borderRadius: BorderRadius.circular(10),
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _selectedCountry?.flag ?? '🌐',
+                      style: const TextStyle(fontSize: 20),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _countryCodeController.text,
+                      style: TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                      ),
+                    ),
+                    const Icon(Icons.arrow_drop_down,
+                        color: Colors.grey, size: 22),
+                  ],
+                ),
+              ),
+            ),
+            // thin divider
+            Container(
+              width: 1,
+              height: 22,
+              color: Colors.grey.shade300,
+              margin: const EdgeInsets.symmetric(horizontal: 6),
+            ),
+            // ---- Phone number input (RIGHT) ----
+            Expanded(
+              child: TextFormField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                inputFormatters: const [],
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  isDense: true,
+                  contentPadding:
+                      const EdgeInsets.symmetric(vertical: 6),
+                  hintText: '712 345 678',
+                  hintStyle: TextStyle(
+                    color: Colors.grey[400],
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w500,
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    ),
+  );
+}
+
+// ---- Open picker sheet ----
+Future<void> _openCountryPicker() async {
+  final picked = await showModalBottomSheet<Country>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Theme.of(context).cardColor,
+    builder: (_) => _CountryPickerSheet(
+      countries: _countries,
+      selected: _selectedCountry,
+    ),
+  );
+
+  if (picked != null) {
+    setState(() {
+      _selectedCountry = picked;
+      _countryCodeController.text = picked.dial;
+    });
+  }
+}
 
   // ==========================================================
   //  COVER IMAGE
@@ -1513,6 +1656,152 @@ class _BusinessTypeSearchSheetState extends State<_BusinessTypeSearchSheet> {
                                 color: Theme.of(context).primaryColor)
                             : null,
                         onTap: () => Navigator.pop(context, type),
+                      );
+                    },
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ==========================================================
+//  COUNTRY PICKER SHEET (searchable, flag + dial code)
+// ==========================================================
+class _CountryPickerSheet extends StatefulWidget {
+  final List<Country> countries;
+  final Country? selected;
+
+  const _CountryPickerSheet({
+    required this.countries,
+    this.selected,
+  });
+
+  @override
+  State<_CountryPickerSheet> createState() => _CountryPickerSheetState();
+}
+
+class _CountryPickerSheetState extends State<_CountryPickerSheet> {
+  final TextEditingController _search = TextEditingController();
+  List<Country> _filtered = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filtered = widget.countries;
+    _search.addListener(_onSearch);
+  }
+
+  void _onSearch() {
+    final q = _search.text.toLowerCase().trim();
+    setState(() {
+      _filtered = q.isEmpty
+          ? widget.countries
+          : widget.countries.where((c) {
+              return c.name.toLowerCase().contains(q) ||
+                  c.iso.toLowerCase().contains(q) ||
+                  c.dial.contains(q);
+            }).toList();
+    });
+  }
+
+  @override
+  void dispose() {
+    _search.removeListener(_onSearch);
+    _search.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.78,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 10, bottom: 6),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 6),
+            child: Text(
+              'Select Country Code',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: TextField(
+              controller: _search,
+              autofocus: false,
+              decoration: InputDecoration(
+                hintText: 'Search country or dial code…',
+                prefixIcon: const Icon(Icons.search, size: 20),
+                suffixIcon: _search.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 20),
+                        onPressed: () => _search.clear(),
+                      )
+                    : null,
+                filled: true,
+                fillColor: Theme.of(context).inputDecorationTheme.fillColor,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: _filtered.isEmpty
+                ? const Center(
+                    child: Text('No countries found',
+                        style: TextStyle(color: Colors.grey)),
+                  )
+                : ListView.builder(
+                    padding: EdgeInsets.only(bottom: bottomInset + 8),
+                    itemCount: _filtered.length,
+                    itemBuilder: (context, index) {
+                      final c = _filtered[index];
+                      final isSel = widget.selected?.iso == c.iso;
+                      return ListTile(
+                        leading: Text(c.flag,
+                            style: const TextStyle(fontSize: 26)),
+                        title: Text(
+                          c.name,
+                          style: TextStyle(
+                            fontWeight: isSel
+                                ? FontWeight.bold
+                                : FontWeight.w500,
+                          ),
+                        ),
+                        trailing: Text(
+                          c.dial,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: isSel
+                                ? Theme.of(context).primaryColor
+                                : Colors.grey[700],
+                          ),
+                        ),
+                        selected: isSel,
+                        onTap: () => Navigator.pop(context, c),
                       );
                     },
                   ),

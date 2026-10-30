@@ -31,9 +31,9 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-     final app = Provider.of<AppState>(context);
+     final app = Provider.of<AppInState>(context);
     final nearby = app.allRestaurants.take(5).toList();
-    final String imageUrl = 'https://qopera.app';
+    final String imageUrl = 'http://192.168.1.115:8000 ';
     
     return  MultiBlocProvider(
         providers: [

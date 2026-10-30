@@ -26,7 +26,7 @@ class ProfileQr {
 //  SERVICE
 // ============================================================
 class QrService {
-  static const String _base = 'https://qopera.app';
+  static const String _base = 'http://192.168.1.115:8000 ';
 
   Future<String?> _token() async {
     final p = await SharedPreferences.getInstance();

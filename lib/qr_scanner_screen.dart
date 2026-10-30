@@ -76,7 +76,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       if (!mounted) return;
       final restaurant = Result.fromJson(data);
       // Record this scan so it appears in the Saved tab's "Recently Scanned".
-      Provider.of<AppState>(context, listen: false).addRecentScan(restaurant);
+      Provider.of<AppInState>(context, listen: false).addRecentScan(restaurant);
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => RestaurantScreen(restaurant: restaurant)),

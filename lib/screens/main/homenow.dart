@@ -143,7 +143,7 @@ class _RestaurantHomePageState extends State<RestaurantHomePage> {
   Future<void> fetchCategories() async {
     // For Android emulator, use 10.0.2.2
     // For physical device, use your computer's IP
-    const String apiUrl = 'https://qopera.app/prof/api/typemodel/';
+    const String apiUrl = 'http://192.168.1.115:8000 /prof/api/typemodel/';
     // const String apiUrl = 'http://10.0.2.2:8000/prof/api/typemodel/';
     
     try {

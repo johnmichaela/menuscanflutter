@@ -81,7 +81,7 @@
 //   String? errorMessage;
    
 // Future<void> fetchCategories() async {
-//     const String apiUrl = 'https://qopera.app/prof/api/typemodel/';
+//     const String apiUrl = 'http://192.168.1.115:8000 /prof/api/typemodel/';
     
 //     try {
 //       final response = await http.get(Uri.parse(apiUrl));
@@ -458,7 +458,7 @@
 
 
 //   // Future<void> fetchCategoriesx() async {
-//   //   const String apiUrl = 'https://qopera.app/prof/api/typemodel/';
+//   //   const String apiUrl = 'http://192.168.1.115:8000 /prof/api/typemodel/';
 //   //   print("Fetching categories from: $apiUrl");
 //   //   try {
 //   //     final response = await http.get(Uri.parse(apiUrl));
@@ -486,7 +486,7 @@
 //   // }
 
 // Future<void> fetchCategories() async {
-//     const String apiUrl = 'https://qopera.app/prof/api/typemodel/';
+//     const String apiUrl = 'http://192.168.1.115:8000 /prof/api/typemodel/';
     
 //     try {
 //       final response = await http.get(Uri.parse(apiUrl));
@@ -680,7 +680,7 @@ class _RestaurantHomePageState extends State<RestaurantHomePage> {
   String? errorMessageCategories;
    
   // Future<void> fetchCategories() async {
-  //   const String apiUrl = 'https://qopera.app/prof/api/typemodel/';
+  //   const String apiUrl = 'http://192.168.1.115:8000 /prof/api/typemodel/';
     
   //   try {
   //     final response = await http.get(Uri.parse(apiUrl));
@@ -708,7 +708,7 @@ class _RestaurantHomePageState extends State<RestaurantHomePage> {
   //   }
   // }
 Future<void> fetchCategories() async {
-  const String apiUrl = 'https://qopera.app/prof/api/typemodel/';
+  const String apiUrl = 'http://192.168.1.115:8000 /prof/api/typemodel/';
   
   try {
     print("🔄 Starting to fetch categories...");

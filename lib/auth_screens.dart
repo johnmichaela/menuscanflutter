@@ -31,7 +31,7 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _loading = true);
     try {
       final data = await ApiService.login(_usernameCtrl.text.trim(), _passwordCtrl.text);
-      final app = Provider.of<AppState>(context, listen: false);
+      final app = Provider.of<AppInState>(context, listen: false);
       app.login(username: _usernameCtrl.text.trim(), token: data['access']);
       if (mounted) {
         _toast('Welcome back!');

@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ballon/l10n/app_strings.dart';
 // ============================================================
@@ -824,8 +825,8 @@ class _ProductRow extends StatelessWidget {
                   Row(
                     children: [
                       // veg indicator
-                      _vegDot(item.isVeg),
-                      const SizedBox(width: 6),
+                      // _vegDot(item.isVeg),
+                      // const SizedBox(width: 6),
                       Expanded(
                         child: Text(
                           item.name,
@@ -891,33 +892,33 @@ class _ProductRow extends StatelessWidget {
                   Row(
                     children: [
                       Text(
-                       item.discountPrice != null ? '${item.currency} ${item.discountPrice!.toStringAsFixed(0)}' : '${item.currency} ${item.price.toStringAsFixed(0)}',
+                       item.discountPrice != null ? '${item.currency} ${NumberFormat.decimalPattern().format(item.discountPrice)}' : '${item.currency} ${NumberFormat.decimalPattern().format(item.price)}',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Theme.of(context).primaryColor,
+                          // color: Theme.of(context).primaryColor,
                         ),
                       ),
                       if (item.discountPrice != null) ...[
                         const SizedBox(width: 6),
                         Text(
-                          '${item.currency} ${item.price.toStringAsFixed(0)}',
+                          '${item.currency} ${NumberFormat.decimalPattern().format(item.price)}',
                           style:  TextStyle(
                             fontSize: 12,
-                            color: Theme.of(context).textTheme.titleMedium?.color,
+                            color: Colors.grey,
                             decoration: TextDecoration.lineThrough,
                           ),
                         ),
                       ],
                        const Spacer(),
-                      if (item.category != null) ...[
-                    // const SizedBox(height: 2),
-                    Text(
-                      item.category!.name,
-                      style: const TextStyle(
-                          fontSize: 12, color: _AppColors.textMid),
-                    ),
-                  ],
+                  //     if (item.category != null) ...[
+                  //   // const SizedBox(height: 2),
+                  //   Text(
+                  //     item.category!.name,
+                  //     style: const TextStyle(
+                  //         fontSize: 12, color: _AppColors.textMid),
+                  //   ),
+                  // ],
                       const Spacer(),
                       Container(
                         padding: const EdgeInsets.symmetric(

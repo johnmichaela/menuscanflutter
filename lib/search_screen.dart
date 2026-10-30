@@ -23,7 +23,7 @@
 //     super.dispose();
 //   }
 
-// List<Result> _filtered(AppState app) {
+// List<Result> _filtered(AppInState app) {
 //     final q = _query.trim().toLowerCase();
 //     if (q.isEmpty) return [];
 //     return app.allRestaurants
@@ -33,7 +33,7 @@
 
 //   @override
 //   Widget build(BuildContext context) {
-//     final app = Provider.of<AppState>(context);
+//     final app = Provider.of<AppInState>(context);
 //     final results = _filtered(app);
 
 //     return Scaffold(
@@ -513,7 +513,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final app = Provider.of<AppState>(context);
+    final app = Provider.of<AppInState>(context);
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),

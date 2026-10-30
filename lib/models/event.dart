@@ -183,10 +183,21 @@ class Organizer {
     final String? activity;
     final String? place;
     final String? picture;
-    final int? phoneNumber;
+    final String? phoneNumber;
     final String? email;
     final String? bio;
     final dynamic birthday;
+     final String tier;              // "free" | "vip" | "vvp"
+  final String tierLabel;
+  final DateTime? tierExpiresAt;
+  final bool tierAutoRenew;
+  final bool isTierActive;
+
+  final bool adsActive;
+  final String adsStatus;         // "inactive" | "active"
+  final bool adsIsActive;
+  final DateTime? adsExpiresAt;
+  final bool adsAutoRenew;
     final TypeBusiness? typeBusiness;
 
     Organizer({
@@ -200,6 +211,16 @@ class Organizer {
         this.email,
         this.bio,
         this.birthday,
+         required this.tier,
+    required this.tierLabel,
+    this.tierExpiresAt,
+    required this.tierAutoRenew,
+    required this.isTierActive,
+    required this.adsActive,
+    required this.adsStatus,
+    required this.adsIsActive,
+    this.adsExpiresAt,
+    required this.adsAutoRenew,
         this.typeBusiness,
     });
 
@@ -214,6 +235,20 @@ class Organizer {
         email: json["email"],
         bio: json["bio"],
         birthday: json["birthday"],
+         tier: json['tier'] ?? 'free',
+      tierLabel: json['tier_label'] ?? 'free',
+      tierExpiresAt: json['tier_expires_at'] != null
+          ? DateTime.tryParse(json['tier_expires_at'])
+          : null,
+      tierAutoRenew: json['tier_auto_renew'] ?? false,
+      isTierActive: json['is_tier_active'] ?? false,
+      adsActive: json['ads_active'] ?? false,
+      adsStatus: json['ads_status'] ?? 'inactive',
+      adsIsActive: json['ads_is_active'] ?? false,
+      adsExpiresAt: json['ads_expires_at'] != null
+          ? DateTime.tryParse(json['ads_expires_at'])
+          : null,
+      adsAutoRenew: json['ads_auto_renew'] ?? false,
         typeBusiness: json["type_business"] == null ? null : TypeBusiness.fromJson(json["type_business"]),
     );
 
@@ -228,6 +263,16 @@ class Organizer {
         "email": email,
         "bio": bio,
         "birthday": birthday,
+         "tier": tier,
+        "tier_label": tierLabel,
+        "tier_expires_at": tierExpiresAt?.toIso8601String(),
+        "tier_auto_renew": tierAutoRenew,
+        "is_tier_active": isTierActive,
+        "ads_active": adsActive,
+        "ads_status": adsStatus,
+        "ads_is_active": adsIsActive,
+        "ads_expires_at": adsExpiresAt?.toIso8601String(),
+        "ads_auto_renew": adsAutoRenew,
         "type_business": typeBusiness?.toJson(),
     };
 }

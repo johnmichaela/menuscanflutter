@@ -1333,7 +1333,7 @@ Future<void> deleteEvent(int id) async {
   final token = prefs.getString('token');
 
   final res = await http.delete(
-    Uri.parse('https://qopera.app/prof/api/posts/delete/$id'), // Option A
+    Uri.parse('http://192.168.1.115:8000 /prof/api/posts/delete/$id'), // Option A
     // Option B: '/api/events/$id/delete/'
     headers: {
       if (token != null) 'Authorization': 'Token $token',

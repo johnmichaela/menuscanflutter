@@ -19,7 +19,7 @@ class Profile {
   final dynamic activity;
   final dynamic place;
   final String? picture;
-  final int? phoneNumber;
+  final String? phoneNumber;
   final String? email;
   final String? bio;
   final String? birthday;
@@ -111,7 +111,7 @@ class _ProfileShowScreenState extends State<ProfileShowScreen> {
   //   final prefs = await SharedPreferences.getInstance();
   // final String? token = prefs.getString('token');
 
-  //   final url = Uri.parse('https://qopera.app/prof/api-prof/');
+  //   final url = Uri.parse('http://192.168.1.115:8000 /prof/api-prof/');
     
   //   try {
   //     final response = await http.get(url, 
@@ -139,7 +139,7 @@ class _ProfileShowScreenState extends State<ProfileShowScreen> {
     final prefs = await SharedPreferences.getInstance();
     final String? token = prefs.getString('token');
 
-    final url = Uri.parse('https://qopera.app/prof/api-prof/');
+    final url = Uri.parse('http://192.168.1.115:8000 /prof/api-prof/');
     
     try {
       final response = await http.get(url, 
@@ -192,7 +192,7 @@ Future<void> logoutUser(BuildContext context) async {
     if (token != null) {
       try {
         final response = await http.post(
-          Uri.parse('https://qopera.app/prof/api/logout/'),
+          Uri.parse('http://192.168.1.115:8000 /prof/api/logout/'),
           headers: {
             'Content-Type': 'application/json',
             'Authorization': 'Bearer $token',
@@ -280,7 +280,7 @@ Future<void> logoutUser(BuildContext context) async {
     // Fallbacks for empty fields
     String displayName = profile.name.isNotEmpty ? profile.name : profile.user.username;
     String displayEmail = profile.email ?? profile.user.email;
-    int displayPhone = profile.phoneNumber!;
+    String displayPhone = profile.phoneNumber!;
     
     // Fallback for picture
     String imageUrl = profile.picture ?? 'https://i.pravatar.cc/300';

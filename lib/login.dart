@@ -410,7 +410,7 @@
 //   void loginTest() async {
 //     try {
 //       Response response = await post(
-//           Uri.parse('https://qopera.app/prof/api/login/'),
+//           Uri.parse('http://192.168.1.115:8000 /prof/api/login/'),
 //           body: {
 //             'username': usernameController.text,
 //             'password': passwordController.text
@@ -698,7 +698,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void loginTest() async {
     try {
       Response response = await post(
-          Uri.parse('https://qopera.app/prof/api/login/'),
+          Uri.parse('http://192.168.1.115:8000 /prof/api/login/'),
           body: {
             'username': usernameController.text,
             'password': passwordController.text

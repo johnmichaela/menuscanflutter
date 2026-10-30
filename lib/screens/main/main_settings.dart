@@ -7,6 +7,7 @@ import 'package:ballon/screens/sub/event/venue_list_screen.dart';
 import 'package:ballon/screens/sub/language_settings_page.dart';
 import 'package:ballon/screens/sub/menu/add_menu.dart';
 import 'package:ballon/screens/sub/post/add_post.dart';
+import 'package:ballon/screens/sub/payment.dart';
 import 'package:ballon/screens/sub/profile/changepassword.dart';
 import 'package:ballon/screens/sub/profile/editbusiness.dart';
 import 'package:ballon/screens/sub/profile/edit.dart';
@@ -37,10 +38,14 @@ class _SettingsPageState extends State<SettingsPage> {
   String _userEmail = '';
   String? _userAvatar;
   bool _isLoading = true;
-
+  static const String _baseUrl = 'http://192.168.1.115:8000 /prof/api';
+  static const String _statusPath = '/store/status';
+    // bool _isOpen = false;
+  bool _isUpdating = false; 
   @override
   void initState() {
     super.initState();
+    _loadStatus();
     _checkLoginStatus();
     _loadAllProfileData();
   }
@@ -54,8 +59,9 @@ class _SettingsPageState extends State<SettingsPage> {
   String? profilePicture = '';
   String? profileUsername = '';
   bool? profileIsVisible = false;
-
+  bool ?_isOpen=false;
   bool isLoading = true;
+  String? _error;
 
   // ==================== GET TOKEN ====================
   // Future<String?> _getToken() async {
@@ -177,7 +183,7 @@ class _SettingsPageState extends State<SettingsPage> {
   Future<void> _checkLoginStatus() async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
-
+      print("Check token $token");
     setState(() {
       _isLoggedIn = token != null && token.isNotEmpty;
       print('Login status: $_isLoggedIn');
@@ -197,7 +203,7 @@ class _SettingsPageState extends State<SettingsPage> {
       if (token == null) return;
 
       final response = await http.get(
-        Uri.parse('https://qopera.app/prof/api-prof/'),
+        Uri.parse('http://192.168.1.115:8000 /prof/api-prof/'),
         headers: {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
@@ -206,10 +212,12 @@ class _SettingsPageState extends State<SettingsPage> {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        print("data---$data");
         setState(() {
           _userName = data['name'] ?? data['username'] ?? 'User';
           _userEmail = data['email'] ?? '';
           _userAvatar = data['avatar'] ?? data['profile_picture'];
+          _isOpen=data['is_open'];
           _isLoading = false;
         });
       }
@@ -241,23 +249,143 @@ class _SettingsPageState extends State<SettingsPage> {
     // Navigate to login or home
     Navigator.pushReplacementNamed(context, '/login');
   }
+   // ---- Helpers ---------------------------------------------------------
+  Future<Map<String, String>> _headers() async{
+    final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+    return {
+      'Content-Type': 'application/json',
+      if (token != null && token.isNotEmpty) 'Authorization': 'Token $token',
+    };
+  }
+
+  // ---- GET -------------------------------------------------------------
+  Future<void> _loadStatus() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      final res = await http
+          .get(Uri.parse('$_baseUrl$_statusPath'), headers: await _headers())
+          .timeout(const Duration(seconds: 10));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body) as Map<String, dynamic>;
+        // Django returns: { "is_open": true/false }
+        if (mounted) {
+          setState(() {
+            _isOpen = data['is_open'] as bool? ?? false;
+            _isLoading = false;
+          });
+        }
+      } else if (res.statusCode == 401 || res.statusCode == 403) {
+        throw Exception('Not authorized. Please log in.');
+      } else {
+        throw Exception('Server error ${res.statusCode}: ${res.body}');
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  // ---- PATCH -----------------------------------------------------------
+  Future<bool> _updateStatus(bool newValue) async {
+    final res = await http
+        .patch(
+          Uri.parse('$_baseUrl$_statusPath'),
+          headers: await _headers(),
+          body: jsonEncode({'is_open': newValue}), // Django snake_case
+        )
+        .timeout(const Duration(seconds: 10));
+
+    if (res.statusCode == 200) {
+      // Confirm server accepted the value
+      final data = jsonDecode(res.body) as Map<String, dynamic>;
+      return data['is_open'] as bool? ?? newValue;
+    }
+    throw Exception('Server error ${res.statusCode}: ${res.body}');
+  }
+
+  // ---- Auth check ------------------------------------------------------
+  Future<bool> _isCheckLoginStatus() async {
+    // Replace with your real check
+    final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+    return token != null && token.isNotEmpty;
+  }
+
+  // ---- Switch handler --------------------------------------------------
+  Future<void> _onToggle(bool value) async {
+    // 1. Auth first
+    final loggedIn = await _isCheckLoginStatus();
+    if (!loggedIn) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please log in first')),
+      );
+      return;
+    }
+
+    // 2. Optimistic update
+    final previous = _isOpen;
+    setState(() {
+      _isOpen = value;
+      _isUpdating = true;
+    });
+
+    // 3. PATCH
+    try {
+      final confirmed = await _updateStatus(value);
+      if (!mounted) return;
+      setState(() {
+        _isOpen = confirmed;
+        _isUpdating = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(confirmed ? 'Store opened' : 'Store closed'),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      // 4. Rollback
+      setState(() {
+        _isOpen = previous;
+        _isUpdating = false;
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final themeCtrl = context.watch<ThemeController>();
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      // appBar: AppBar(
-      //   title: Text(
-      //     context.tr.settings,
-      //     style: TextStyle(
-      //       color: Theme.of(context).textTheme.titleMedium?.color,
-      //     ),
-      //   ),
-      //   backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-      //   elevation: 0,
-      //   iconTheme: Theme.of(context).iconTheme,
-      // ),
+      appBar: AppBar(
+        title: Text(
+          context.tr.settings,
+          // style: TextStyle(
+          //   color: Theme.of(context).textTheme.titleMedium?.color,
+          // ),
+        ),
+        foregroundColor:Colors.white,
+        backgroundColor: Theme.of(context).primaryColor,
+        elevation: 0,
+      ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
@@ -271,6 +399,31 @@ class _SettingsPageState extends State<SettingsPage> {
                 // --- ACCOUNT SECTION ---
                 _buildSectionTitle(context.tr.account),
                 if (_isLoggedIn) ...[
+                  // switch open and close
+                  // SwitchListTile(
+                  //   title:  Text(_isOpen! ?'Open':'Close'),
+                  //   subtitle: Text(_isOpen! ? 'Store is open' : 'Store is closed'),
+                  //   value: _isOpen!,
+                  //   activeColor: const Color.fromARGB(255, 48, 233, 109),
+                   
+                  //   onChanged: (value) {
+                  //     _checkLoginStatus();
+                  //     setState(() => _isOpen = value);
+                  //   },
+                  // ),
+                   SwitchListTile(
+                    title: Text(_isOpen! ? 'Open' : 'Close'),
+                    subtitle: Text(_isOpen! ? 'Store is open' : 'Store is closed'),
+                    value: _isOpen!,
+                    activeColor: const Color.fromARGB(255, 48, 233, 109),
+                    // Disable while PATCHing
+                    onChanged: _isUpdating ? null : _onToggle,
+                  ),
+                  if (_isUpdating)
+                    const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: LinearProgressIndicator(),
+                    ),
                   _buildSettingTile(
                     icon: Icons.person,
                     title: context.tr.editProfile,
@@ -345,19 +498,20 @@ class _SettingsPageState extends State<SettingsPage> {
                       MaterialPageRoute(builder: (_) => ProfileQrCard(profileId: profid!,)),
                     ),
                   ),
-                //   const Divider(color: Colors.grey, height: 1),
-                //    // --- Payment SECTION ---
-                // _buildSectionTitle('Payment'),
-                // _buildSettingTile(
-                //   icon: Icons.payment,
-                //   title: 'Payment Settings',
-                //   subtitle: 'Manage your subscription and payment methods',
-                //   onTap: () => Navigator.push(
-                //     context,
-                //     MaterialPageRoute(builder: (_) => SubscriptionScreen()),
-                //   ),
+                  const Divider(color: Colors.grey, height: 1),
+                   // --- Payment SECTION ---
+                _buildSectionTitle('Payment'),
+                _buildSettingTile(
+                  icon: Icons.payment,
+                  title: 'Payment Settings',
+                  subtitle: 'Manage your subscription and payment methods',
+                  onTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => PaymentScreen())
+                    // SubscriptionScreen()),
+                  ),
                  
-                // ),
+                ),
                 ]
                 ] else ...[
                   _buildSettingTile(
@@ -740,7 +894,7 @@ class _SettingsPageState extends State<SettingsPage> {
       if (token == null) return;
 
       final response = await http.post(
-        Uri.parse('https://qopera.app/prof/api/user/delete'),
+        Uri.parse('http://192.168.1.115:8000 /prof/api/user/delete'),
         headers: {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
@@ -793,7 +947,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       if (token == null) return;
 
       final response = await http.get(
-        Uri.parse('https://qopera.app/prof/api/user/profile/'),
+        Uri.parse('http://192.168.1.115:8000 /prof/api/user/profile/'),
         headers: {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
@@ -830,7 +984,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
       }
 
       final response = await http.put(
-        Uri.parse('https://qopera.app/prof/api/profile/update/'),
+        Uri.parse('http://192.168.1.115:8000 /prof/api/profile/update/'),
         headers: {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
@@ -1051,7 +1205,7 @@ class _ChangePasswordPageState extends State<ChangePasswordPage> {
       }
 
       final response = await http.post(
-        Uri.parse('https://qopera.app/prof/api/user/change-password/'),
+        Uri.parse('http://192.168.1.115:8000 /prof/api/user/change-password/'),
         headers: {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
@@ -1278,15 +1432,15 @@ class LanguageSettingsPagex extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(
-        title: const Text('Language', style: TextStyle(color: Colors.white)),
+        title:  Text( context.tr.language, style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.black,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
       body: ListView(
-        children: const [
+        children:  [
           ListTile(
-            title: Text('English', style: TextStyle(color: Colors.white)),
+            title: Text( context.tr.english, style: TextStyle(color: Colors.white)),
             trailing: Icon(Icons.check, color: Colors.blue),
           ),
           ListTile(
@@ -1485,7 +1639,7 @@ class HelpPage extends StatelessWidget {
             onTap: () async {
               final Uri emailUri = Uri(
                 scheme: 'mailto',
-                path: 'support@example.com',
+                path: 'info@qopera.app',
               );
 
               if (await canLaunchUrl(emailUri)) {
@@ -1550,7 +1704,7 @@ class HelpPage extends StatelessWidget {
           // ---------- Footer ----------
           Center(
             child: Text(
-              'MenuScan v1.0.0  •  Made with MenuScan',
+              'Qopera v1.0.0  •  Made with Qopera',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -1684,7 +1838,7 @@ class FeedbackPage extends StatefulWidget {
 class _FeedbackPageState extends State<FeedbackPage> {
   final TextEditingController _feedbackController = TextEditingController();
 
-  // post https://qopera.app/prof/api/send-feedback
+  // post http://192.168.1.115:8000 /prof/api/send-feedback
   void sendFeedback(String message) async {
     final prefs = await SharedPreferences.getInstance();
     final token = prefs.getString('token');
@@ -1695,7 +1849,7 @@ class _FeedbackPageState extends State<FeedbackPage> {
       if (token != null) 'Authorization': 'Token $token',
     };
     final response = await http.post(
-      Uri.parse('https://qopera.app/prof/api/send-feedback'),
+      Uri.parse('http://192.168.1.115:8000 /prof/api/send-feedback'),
 
       headers: headers,
       body: jsonEncode({'message': message}),

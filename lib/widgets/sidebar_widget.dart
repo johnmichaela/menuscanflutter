@@ -196,7 +196,7 @@ class _SidebarWidgetState extends State<SidebarWidget> {
       final String? token = prefs.getString('token');
       if (token != null) {
         // await http.post(
-        //   Uri.parse('https://qopera.app/api/logout/'),
+        //   Uri.parse('http://192.168.1.115:8000 /api/logout/'),
         //   headers: {'Authorization': 'Bearer $token'},
         // );
       }

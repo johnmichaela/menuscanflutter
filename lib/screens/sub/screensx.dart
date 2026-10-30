@@ -172,7 +172,7 @@
 //     final prefs = await SharedPreferences.getInstance();
 //     final String? token = prefs.getString('token');
 
-//     final url = Uri.parse('https://qopera.app/prof/api-prof/');
+//     final url = Uri.parse('http://192.168.1.115:8000 /prof/api-prof/');
     
 //     try {
 //       final response = await http.get(url, 
@@ -333,7 +333,7 @@
 //   Widget build(BuildContext context) {
 //     final app = Provider.of<AppState>(context);
 //     final nearby = app.allRestaurants.take(5).toList();
-//     final String imageUrl = 'https://qopera.app';
+//     final String imageUrl = 'http://192.168.1.115:8000 ';
 //     return Scaffold(
 //       backgroundColor: const Color(0xFFF5F5F7),
 //       body: SafeArea(
@@ -484,7 +484,7 @@
 //           Stack(children: [
 //             ClipRRect(
 //               borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-//               child: Image.network('https://qopera.app/${r.banner}', height: 90, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(height: 90, color: Colors.grey.shade200, child: const Icon(Icons.restaurant, color: Colors.grey))),
+//               child: Image.network('http://192.168.1.115:8000 /${r.banner}', height: 90, width: double.infinity, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(height: 90, color: Colors.grey.shade200, child: const Icon(Icons.restaurant, color: Colors.grey))),
 //             ),
 //             Positioned(top: 8, right: 8, child: _ratingChip(r.rating! as double)),
 //           ]),

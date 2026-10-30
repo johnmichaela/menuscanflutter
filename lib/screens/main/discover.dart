@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:ballon/ads.dart';
 import 'package:ballon/core/handle_error/execptions.dart';
 import 'package:ballon/models/resturants.dart' show Food, Result, Resturants;
 import 'package:ballon/pagination/data/data_source/urls.dart';
@@ -8,11 +9,15 @@ import 'package:ballon/qr_scanner_screen.dart';
 import 'package:ballon/screens/sub/screens.dart';
 import 'package:ballon/services/geolocation.dart';
 import 'package:ballon/shimmer.dart';
+import 'package:ballon/widgets/scalloped_badge.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'package:ballon/l10n/app_strings.dart';
 import 'package:internet_connection_checker/internet_connection_checker.dart';
+import 'package:intl/intl.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 // --- API SERVICE ---
 class ApiService {
@@ -70,13 +75,14 @@ class _DiscoverPageState extends State<DiscoverPage> {
   int _currentPage = 1;
   String _currentSort = 'reviews';
   StreamSubscription<InternetConnectionStatus>? _connectionSubscription;
-
+  bool _adsActive=false;
  InternetConnectionStatus? _lastConnectionStatus;
   final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
+    getActive();
     _loadFoods();
     _scrollController.addListener(_onScroll);
     _searchController.addListener(_filterFoods);
@@ -92,6 +98,14 @@ class _DiscoverPageState extends State<DiscoverPage> {
   });
   }
 
+Future<void> getActive() async {
+  final prefs = await SharedPreferences.getInstance();
+  final bool active = prefs.getBool('ads_active') ?? false;
+  if (!mounted) return;
+  setState(() {
+    _adsActive = active;
+  });
+}
   // Fetch restaurants and extract all food items with restaurant info
   Future<void> _loadFoods() async {
     setState(() { _isLoading = true; _errorMessage = null; });
@@ -176,151 +190,7 @@ class _DiscoverPageState extends State<DiscoverPage> {
     }
   }
 
-  // @override
-  // Widget build(BuildContext context) {
-  //   return Scaffold(
-  //     backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-  //     body: SafeArea(
-  //       child: Column(
-  //         children: [
-  //           // --- SEARCH BAR AND QR ICON ---
-  //           Padding(
-  //             padding: const EdgeInsets.all(12.0),
-  //             child: Row(
-  //               children: [
-  //                 Expanded(
-  //                   child: Container(
-  //                     height: 50,
-  //                     padding: const EdgeInsets.symmetric(horizontal: 12),
-  //                     decoration: BoxDecoration(
-  //                       color: Theme.of(context).cardColor,
-  //                       borderRadius: BorderRadius.circular(10),
-  //                     ),
-  //                     child: Row(
-  //                       children: [
-  //                         const Icon(Icons.search, color: Colors.grey),
-  //                         const SizedBox(width: 10),
-  //                         Expanded(
-  //                           child: TextField(
-  //                             controller: _searchController,
-  //                             style:  TextStyle(color: Colors.grey),
-  //                             decoration:  InputDecoration(
-  //                               hintText: context.tr.searchDishesOrRestaurants,
-  //                               hintStyle: TextStyle(color: Colors.grey, fontSize: 16),
-  //                               border: InputBorder.none,
-  //                             ),
-  //                           ),
-  //                         ),
-  //                         if (_searchController.text.isNotEmpty)
-  //                           GestureDetector(
-  //                             onTap: () => _searchController.clear(),
-  //                             child: const Icon(Icons.close, color: Colors.grey, size: 20),
-  //                           ),
-  //                       ],
-  //                     ),
-  //                   ),
-  //                 ),
-  //                 const SizedBox(width: 12),
-  //                 GestureDetector(
-  //                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const QrScannerScreen())),
-  //                   child: Container(
-  //                     height: 50,
-  //                     width: 50,
-  //                     decoration: BoxDecoration(
-  //                       color: Theme.of(context).primaryColor,
-  //                       borderRadius: BorderRadius.circular(10),
-  //                   ),
-  //                   child: const Icon(Icons.qr_code_scanner, color: Colors.white, size: 28),
-  //                 ),)
-  //               ],
-  //             ),
-  //           ),
-
-  //           // --- TITLE AND FILTER ---
-  //           Padding(
-  //             padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
-  //             child: Row(
-  //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //               children: [
-  //                  Text(context.tr.discover, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold,)),
-  //                 DropdownButton<String>(
-  //                   value: _currentSort,
-  //                   dropdownColor: Theme.of(context).cardColor,
-  //                   icon:  Icon(Icons.filter_list, color: Theme.of(context).primaryColor),
-  //                   underline: const SizedBox(),
-  //                   style: TextStyle(color: Theme.of(context).textTheme.titleMedium?.color, fontSize: 14),
-  //                   items:  [
-  //                     DropdownMenuItem(value: 'reviews', child: Text(context.tr.topRated)),
-  //                      DropdownMenuItem(value: 'distance', child: Text(context.tr.nearbyRestaurants)),
-  //                   ],
-  //                   onChanged: _changeSort,
-  //                 ),
-  //               ],
-  //             ),
-  //           ),
-
-  //           // --- GRID LIST OF FOODS (3 COLUMNS) ---
-  //           Expanded(
-  //             child: _isLoading && _allFoods.isEmpty
-  //                 ? const Center(child: CircularProgressIndicator())
-  //                 : _errorMessage != null && _allFoods.isEmpty
-  //                     ?  Container(
-  //                       margin: const EdgeInsets.all(20),
-  //                           height: 300,
-  //                           child: Shimmer.fromColors(
-  //                             baseColor: Theme.of(context).cardColor,
-  //                             highlightColor: Theme.of(context).cardColor.withOpacity(0.5),
-  //                             enabled: true,
-  //                             child: GridView.builder(
-  //                               itemCount: 15, // 2 rows × 3 columns
-  //                               physics: const NeverScrollableScrollPhysics(),
-  //                               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 10),
-  //                               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-  //                                 crossAxisCount: 3, // 3 columns
-  //                                 crossAxisSpacing: 10,
-  //                                 mainAxisSpacing: 10,
-  //                                 childAspectRatio: 1.0,
-  //                               ),
-  //                               itemBuilder: (context, index) {
-  //                                 return Container(
-  //                                   decoration: BoxDecoration(
-  //                                     color: Theme.of(context).cardColor,
-  //                                     borderRadius: BorderRadius.circular(10),
-  //                                   ),
-  //                                 );
-  //                               },
-  //                             ),
-  //                           ),
-  //                         )
-  //                     : _displayedFoods.isEmpty
-  //                         ?  Center(child: Text(context.tr.noDishesFound, style: TextStyle(color: Colors.grey)))
-  //                         : RefreshIndicator(
-  //                             onRefresh: _refresh,
-  //                             color: Theme.of(context).primaryColor,
-  //                             backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-  //                             child: GridView.builder(
-  //                               controller: _scrollController,
-  //                               physics: const AlwaysScrollableScrollPhysics(),
-  //                               padding: const EdgeInsets.all(12.0),
-  //                               gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-  //                                 crossAxisCount: 3, // CHANGED: 3 columns
-  //                                 childAspectRatio: 0.65, // Adjusted for 3 columns
-  //                                 crossAxisSpacing: 8,
-  //                                 mainAxisSpacing: 8,
-  //                               ),
-  //                               itemCount: _displayedFoods.length,
-  //                               itemBuilder: (context, index) {
-  //                                 final foodWithRestaurant = _displayedFoods[index];
-  //                                 return _FoodCard(foodWithRestaurant: foodWithRestaurant);
-  //                               },
-  //                             ),
-  //                           ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
+bool _isGridView = true; // true = grid, false = list
 
 @override
 Widget build(BuildContext context) {
@@ -343,7 +213,7 @@ Widget build(BuildContext context) {
                   children: [
                     Expanded(
                       child: Container(
-                        height: 50,
+                        height: 40,
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         decoration: BoxDecoration(
                           color: Theme.of(context).cardColor,
@@ -361,7 +231,7 @@ Widget build(BuildContext context) {
                                   hintText: context.tr.searchDishesOrRestaurants,
                                   hintStyle: const TextStyle(
                                     color: Colors.grey,
-                                    fontSize: 16,
+                                    fontSize: 13,
                                   ),
                                   border: InputBorder.none,
                                 ),
@@ -380,23 +250,41 @@ Widget build(BuildContext context) {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    // const SizedBox(width: 12),
+                    // GestureDetector(
+                    //   onTap: () => Navigator.push(
+                    //     context,
+                    //     MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+                    //   ),
+                    //   child: Container(
+                    //     height: 40,
+                    //     width: 40,
+                    //     decoration: BoxDecoration(
+                    //       color: Theme.of(context).primaryColor,
+                    //       borderRadius: BorderRadius.circular(10),
+                    //     ),
+                    //     child: const Icon(
+                    //       Icons.qr_code_scanner,
+                    //       color: Colors.white,
+                    //       size: 28,
+                    //     ),
+                    //   ),
+                    // ),
+                    const SizedBox(width: 8),
+                    // 👇 Toggle grid/list
                     GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const QrScannerScreen()),
-                      ),
+                      onTap: () => setState(() => _isGridView = !_isGridView),
                       child: Container(
-                        height: 50,
-                        width: 50,
+                        height: 40,
+                        width: 40,
                         decoration: BoxDecoration(
                           color: Theme.of(context).primaryColor,
                           borderRadius: BorderRadius.circular(10),
                         ),
-                        child: const Icon(
-                          Icons.qr_code_scanner,
+                        child: Icon(
+                          _isGridView ? LucideIcons.list : LucideIcons.layoutGridCircles,
                           color: Colors.white,
-                          size: 28,
+                          size: 24,
                         ),
                       ),
                     ),
@@ -404,7 +292,10 @@ Widget build(BuildContext context) {
                 ),
               ),
             ),
-
+          SliverToBoxAdapter(
+              child: _adsActive?SizedBox():Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+                child: BannerAdWidget())),
             // --- TITLE AND FILTER ---
             SliverToBoxAdapter(
               child: Padding(
@@ -503,29 +394,112 @@ Widget build(BuildContext context) {
                   ),
                 ),
               )
-            else
-              // Main grid
-              SliverPadding(
-                padding: const EdgeInsets.all(12.0),
-                sliver: SliverGrid(
-                  gridDelegate:
-                      const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 3,
-                    childAspectRatio: 0.65,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                  ),
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final foodWithRestaurant = _displayedFoods[index];
-                      return _FoodCard(
-                        foodWithRestaurant: foodWithRestaurant,
-                      );
-                    },
-                    childCount: _displayedFoods.length,
-                  ),
+              else if (_isGridView)
+  // ---------- GRID ----------
+  SliverPadding(
+    padding: const EdgeInsets.all(12.0),
+    sliver: SliverGrid(
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 3,
+        childAspectRatio: 0.63,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+      ),
+      delegate: SliverChildBuilderDelegate(
+        (context, index) {
+          final foodWithRestaurant = _displayedFoods[index];
+          return _FoodCard(foodWithRestaurant: foodWithRestaurant);
+        },
+        childCount: _displayedFoods.length,
+      ),
+    ),
+  )
+  
+  else 
+  // ---------- LIST ----------
+   
+  SliverPadding(
+    padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+    sliver: Builder(
+      builder: (context) {
+         const int adsEvery = 2;
+    const int groupSize = adsEvery + 1; // 5 items + 1 ad = 6 slots
+    final int adSlots = _displayedFoods.length ~/ adsEvery;
+    final int itemCount = _displayedFoods.length + adSlots;
+        return SliverList(
+          delegate: SliverChildBuilderDelegate(
+            (context, index) {
+              // Is this index an ad slot?
+            final int positionInGroup = index % groupSize;   // index % 3 → 0,1,2,0,1,2,...
+            final int adsBefore = index ~/ groupSize;        // index ~/ 3
+            final bool isAdSlot =
+                positionInGroup == adsEvery && adsBefore < adSlots;
+              
+              if (isAdSlot) {
+                return _adsActive?SizedBox(): Padding(
+                  padding: EdgeInsets.symmetric(vertical: 8.0),
+                  child: NativeAdWidget(), // your native widget
+                );
+              }
+
+              // Map list index → food index (skip ad slots)
+              final int foodIndex = index - adsBefore;
+
+              if (foodIndex < 0 || foodIndex >= _displayedFoods.length) {
+                return const SizedBox.shrink();
+              }
+
+              final foodWithRestaurant = _displayedFoods[foodIndex];
+
+              return Padding(
+                padding: EdgeInsets.only(
+                  bottom: foodIndex == _displayedFoods.length - 1 ? 0 : 2,
                 ),
-              ),
+                child: _FoodListCard(foodWithRestaurant: foodWithRestaurant),
+              );
+            },
+            childCount: itemCount,
+          ),
+        );
+      },
+    ),
+  ),
+// else
+//   // ---------- LIST ----------
+//   SliverPadding(
+//     padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 8.0),
+//     sliver: SliverList.separated(
+//       itemCount: _displayedFoods.length,
+//       separatorBuilder: (_, __) => const SizedBox(height: 5),
+//       itemBuilder: (context, index) {
+//         final foodWithRestaurant = _displayedFoods[index];
+//         return _FoodListCard(foodWithRestaurant: foodWithRestaurant);
+//       },
+//     ),
+//   ),
+            // else
+            //   // Main grid
+            //   SliverPadding(
+            //     padding: const EdgeInsets.all(12.0),
+            //     sliver: SliverGrid(
+            //       gridDelegate:
+            //           const SliverGridDelegateWithFixedCrossAxisCount(
+            //         crossAxisCount: 3,
+            //         childAspectRatio: 0.65,
+            //         crossAxisSpacing: 8,
+            //         mainAxisSpacing: 8,
+            //       ),
+            //       delegate: SliverChildBuilderDelegate(
+            //         (context, index) {
+            //           final foodWithRestaurant = _displayedFoods[index];
+            //           return _FoodCard(
+            //             foodWithRestaurant: foodWithRestaurant,
+            //           );
+            //         },
+            //         childCount: _displayedFoods.length,
+            //       ),
+            //     ),
+            //   ),
           ],
         ),
       ),
@@ -541,6 +515,145 @@ Widget build(BuildContext context) {
 }
 
 // --- HELPER CLASS TO COMBINE FOOD WITH RESTAURANT INFO ---
+class _FoodListCard extends StatelessWidget {
+  final FoodWithRestaurant foodWithRestaurant;
+  const _FoodListCard({required this.foodWithRestaurant});
+
+  @override
+  Widget build(BuildContext context) {
+    final food = foodWithRestaurant.food;
+
+    final double displayPrice = food.discountPrice ?? food.price ?? 0.0;
+    final bool hasDiscount = food.discountPrice != null &&
+        food.price != null &&
+        food.discountPrice! < food.price!;
+
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => FoodDetailScreen(food: food),
+          ),
+        );
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Row(
+          children: [
+            // ---- Image ----
+            SizedBox(
+              width: 90,
+              height: 90,
+              child: food.image != null
+                  ? Image.network(
+                      food.image!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: Colors.grey[800],
+                        child: const Icon(Icons.fastfood,
+                            color: Colors.white, size: 32),
+                      ),
+                    )
+                  : Container(
+                      color: Colors.grey[800],
+                      child: const Icon(Icons.fastfood,
+                          color: Colors.white, size: 32),
+                    ),
+            ),
+
+            // ---- Details ----
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Restaurant name
+                    Row(
+                      children: [
+                        Text(
+                          foodWithRestaurant.restaurantName,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+        //                 ScallopedTierBadge(
+        // tierLabel: foodWithRestaurant.tier, // or 'vip', 'vvp', 'free'
+        // size: 18,)
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+
+                    // Food title
+                    Text(
+                      food.name ?? 'Unknown Dish',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 13,
+                        color: Theme.of(context).textTheme.titleMedium?.color,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+
+                    // Description
+                    if (food.description != null &&
+                        food.description!.isNotEmpty)
+                      Text(
+                        food.description!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                            fontSize: 11, color: Colors.grey),
+                      ),
+                    const SizedBox(height: 6),
+
+                    // Price row
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          '${food.currency ?? '\$'} ${NumberFormat.decimalPattern().format(displayPrice)}',
+                          style: const TextStyle(
+                            color: Colors.orangeAccent,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                        if (hasDiscount) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            '${food.currency ?? '\$'} ${NumberFormat.decimalPattern().format(food.price!)}',
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 11,
+                              decoration: TextDecoration.lineThrough,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 class FoodWithRestaurant {
   final Food food;
   final String restaurantName;
@@ -620,7 +733,7 @@ class _FoodCard extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style:  TextStyle(
                             color: Theme.of(context).primaryColor,
-                            fontSize: 10,
+                            fontSize: 9,
                             fontWeight: FontWeight.w500,
                           ),
                         ),
@@ -635,8 +748,8 @@ class _FoodCard extends StatelessWidget {
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style:  TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      fontSize: 12,
                       color: Theme.of(context).textTheme.titleMedium?.color,
                     ),
                   ),
@@ -660,7 +773,7 @@ class _FoodCard extends StatelessWidget {
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
-                              '${food.currency ?? '\$'} ${displayPrice.toStringAsFixed(2)}',
+                              '${food.currency ?? '\$'} ${NumberFormat.decimalPattern().format(displayPrice)}',
                               style: const TextStyle(
                                 color: Colors.orangeAccent,
                                 fontWeight: FontWeight.bold,
@@ -669,9 +782,10 @@ class _FoodCard extends StatelessWidget {
                             ),
                             if (hasDiscount)
                               Text(
-                                '${food.currency ?? '\$'} ${food.price!.toStringAsFixed(2)}',
+                                '${food.currency ?? '\$'} ${NumberFormat.decimalPattern().format(food.price!)}',
                                 style: const TextStyle(
                                   color: Colors.grey,
+                                  fontWeight: FontWeight.w500,
                                   fontSize: 7,
                                   decoration: TextDecoration.lineThrough,
                                 ),

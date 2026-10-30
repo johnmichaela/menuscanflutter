@@ -1,10 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:ballon/ads.dart';
 import 'package:ballon/comments.dart';
 import 'package:ballon/models/event.dart';
 import 'package:ballon/multipleImage.dart';
 import 'package:ballon/qr_scanner_screen.dart';
 import 'package:ballon/shimmer.dart';
+import 'package:ballon/widgets/scalloped_badge.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
@@ -38,143 +41,159 @@ class _EventScreenState extends State<EventScreen> {
   final ScrollController _scrollController = ScrollController();
   InternetConnectionStatus? _lastConnectionStatus;
   // final ScrollController _scrollController = ScrollController();
-// Optimistic like tracking — eventId -> true/false
-final Map<int, bool> _optimisticLikes = {};
-// Optimistic like counts
-final Map<int, int> _optimisticLikeCounts = {};
-// ---------- LIKE HELPERS ----------
-bool _isLiked(ResultEvent r) {
-  return _optimisticLikes[r.id!] ?? (r.isLiked!);
-}
+ bool _adsActive = false;
+  // Optimistic like tracking — eventId -> true/false
+  final Map<int, bool> _optimisticLikes = {};
+  // Optimistic like counts
+  final Map<int, int> _optimisticLikeCounts = {};
 
-int _likeCount(ResultEvent r) {
-  return _optimisticLikeCounts[r.id!] ?? (r.likeCount ?? 0);
-}
+  // ---------- LIKE HELPERS ----------
+  bool _isLiked(ResultEvent r) {
+    return _optimisticLikes[r.id!] ?? (r.isLiked!);
+  }
 
-Future<void> _onLikeTapped(ResultEvent r) async {
-  final int id = r.id!;
-  final bool currentlyLiked = _isLiked(r);
-  final int currentCount = _likeCount(r);
+  int _likeCount(ResultEvent r) {
+    return _optimisticLikeCounts[r.id!] ?? (r.likeCount ?? 0);
+  }
 
-  // 1. Optimistic update — instant UI feedback
-  setState(() {
-    _optimisticLikes[id] = !currentlyLiked;
-    _optimisticLikeCounts[id] =
-        currentlyLiked ? (currentCount - 1).clamp(0, 1 << 31) : currentCount + 1;
-  });
+  Future<void> _onLikeTapped(ResultEvent r) async {
+    final int id = r.id!;
+    final bool currentlyLiked = _isLiked(r);
+    final int currentCount = _likeCount(r);
 
-  // 2. Fire API in background
-  try {
-    final bool serverLiked = await toggleEventLike(id);
-
-    if (!mounted) return;
-
-    // Sync with server truth
+    // 1. Optimistic update — instant UI feedback
     setState(() {
-      if (serverLiked == currentlyLiked) {
-        // Server disagrees with our optimistic flip → roll back
-        _optimisticLikes[id] = serverLiked;
+      _optimisticLikes[id] = !currentlyLiked;
+      _optimisticLikeCounts[id] = currentlyLiked
+          ? (currentCount - 1).clamp(0, 1 << 31)
+          : currentCount + 1;
+    });
+
+    // 2. Fire API in background
+    try {
+      final bool serverLiked = await toggleEventLike(id);
+
+      if (!mounted) return;
+
+      // Sync with server truth
+      setState(() {
+        if (serverLiked == currentlyLiked) {
+          // Server disagrees with our optimistic flip → roll back
+          _optimisticLikes[id] = serverLiked;
+          _optimisticLikeCounts[id] = currentCount;
+        } else {
+          _optimisticLikes[id] = serverLiked;
+        }
+      });
+    } catch (e) {
+      if (!mounted) return;
+
+      // 3. Roll back on failure + show snackbar
+      setState(() {
+        _optimisticLikes[id] = currentlyLiked;
         _optimisticLikeCounts[id] = currentCount;
-      } else {
-        _optimisticLikes[id] = serverLiked;
-      }
-    });
-  } catch (e) {
-    if (!mounted) return;
+      });
 
-    // 3. Roll back on failure + show snackbar
-    setState(() {
-      _optimisticLikes[id] = currentlyLiked;
-      _optimisticLikeCounts[id] = currentCount;
-    });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Could not update like. Check your connection.'),
+          behavior: SnackBarBehavior.floating,
+          duration: const Duration(seconds: 2),
+        ),
+      );
+    }
+  }
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Could not update like. Check your connection.'),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 2),
+  void _openImageViewer(
+    BuildContext context, {
+    required List<String> images,
+    required int initialIndex,
+    String title = '',
+  }) {
+    if (images.isEmpty) return;
+    final safeIndex = initialIndex.clamp(0, images.length - 1);
+
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black,
+        transitionDuration: const Duration(milliseconds: 220),
+        reverseTransitionDuration: const Duration(milliseconds: 180),
+        pageBuilder: (_, __, ___) => _ImageViewerScreen(
+          images: images,
+          initialIndex: safeIndex,
+          title: title,
+        ),
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
       ),
     );
   }
-}
-void _openImageViewer(
-  BuildContext context, {
-  required List<String> images,
-  required int initialIndex,
-  String title = '',
-}) {
-  if (images.isEmpty) return;
-  final safeIndex = initialIndex.clamp(0, images.length - 1);
 
-  Navigator.of(context).push(
-    PageRouteBuilder(
-      opaque: false,
-      barrierColor: Colors.black,
-      transitionDuration: const Duration(milliseconds: 220),
-      reverseTransitionDuration: const Duration(milliseconds: 180),
-      pageBuilder: (_, __, ___) => _ImageViewerScreen(
-        images: images,
-        initialIndex: safeIndex,
-        title: title,
-      ),
-      transitionsBuilder: (_, anim, __, child) =>
-          FadeTransition(opacity: anim, child: child),
-    ),
-  );
-}
-void _openImageViewerx(
-  BuildContext context, {
-  required List<String> images,
-  required int initialIndex,
-  String title = '',
-}) {
-  if (images.isEmpty) return;
+  void _openImageViewerx(
+    BuildContext context, {
+    required List<String> images,
+    required int initialIndex,
+    String title = '',
+  }) {
+    if (images.isEmpty) return;
 
-  Navigator.of(context).push(
-    PageRouteBuilder(
-      opaque: false,
-      barrierColor: Colors.black,
-      transitionDuration: const Duration(milliseconds: 220),
-      reverseTransitionDuration: const Duration(milliseconds: 180),
-      pageBuilder: (_, __, ___) => _ImageViewerScreen(
-        images: images,
-        initialIndex: initialIndex,
-        title: title,
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        opaque: false,
+        barrierColor: Colors.black,
+        transitionDuration: const Duration(milliseconds: 220),
+        reverseTransitionDuration: const Duration(milliseconds: 180),
+        pageBuilder: (_, __, ___) => _ImageViewerScreen(
+          images: images,
+          initialIndex: initialIndex,
+          title: title,
+        ),
+        transitionsBuilder: (_, anim, __, child) =>
+            FadeTransition(opacity: anim, child: child),
       ),
-      transitionsBuilder: (_, anim, __, child) =>
-          FadeTransition(opacity: anim, child: child),
-    ),
-  );
-}
+    );
+  }
+
   @override
   void initState() {
     super.initState();
+    getActive();
     _loadEvents();
     _scrollController.addListener(_onScroll);
     _searchController.addListener(_filterEvents);
-    _connectionSubscription = InternetConnectionChecker.instance.onStatusChange
-        .listen((status) {
-          if (_lastConnectionStatus == InternetConnectionStatus.disconnected &&
-              status == InternetConnectionStatus.connected) {
-            _loadEvents();
-          }
+    _connectionSubscription =
+        InternetConnectionChecker.instance.onStatusChange.listen((status) {
+      if (_lastConnectionStatus == InternetConnectionStatus.disconnected &&
+          status == InternetConnectionStatus.connected) {
+        _loadEvents();
+      }
 
-          _lastConnectionStatus = status;
-        });
+      _lastConnectionStatus = status;
+    });
   }
-
+Future<void> getActive() async {
+  final prefs = await SharedPreferences.getInstance();
+  final bool active = prefs.getBool('ads_active') ?? false;
+  if (!mounted) return;
+  setState(() {
+    _adsActive = active;
+  });
+}
   Future<void> _loadEvents() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
-
+   print("loadd $_isLoading Error .... $_errorMessage");
     try {
       List<ResultEvent> fetchedData;
       if (_currentSort == 'date') {
         fetchedData = await _apiService.fetchEventsByDate(_currentPage);
+        print(fetchedData);
       } else {
         fetchedData = await _apiService.fetchEventsByPopularity(_currentPage);
+        print(fetchedData);
       }
 
       setState(() {
@@ -269,1225 +288,694 @@ void _openImageViewerx(
     );
   }
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       backgroundColor: Theme.of(
-//         context,
-//       ).scaffoldBackgroundColor, // Dark theme matching restaurant page
-
-//       // drawer: _buildSidebar(),
-//       body: SafeArea(
-//         child: Column(
-//           children: [
-//             // --- SEARCH BAR AND QR ICON ---
-//             // Padding(
-//             //   padding: const EdgeInsets.all(12.0),
-//             //   child: Row(
-//             //     children: [
-//             //       // Search Input
-//             //       Expanded(
-//             //         child: Container(
-//             //           height: 50,
-//             //           padding: const EdgeInsets.symmetric(horizontal: 12),
-//             //           decoration: BoxDecoration(
-//             //             color: Theme.of(context).cardColor,
-//             //             borderRadius: BorderRadius.circular(10),
-//             //           ),
-//             //           child: Row(
-//             //             children: [
-//             //               const Icon(Icons.search, color: Colors.grey),
-//             //               const SizedBox(width: 10),
-//             //               Expanded(
-//             //                 child: TextField(
-//             //                   controller: _searchController,
-//             //                   style: TextStyle(color: Colors.grey),
-//             //                   decoration: InputDecoration(
-//             //                     hintText: context.tr.searchPostsOrPlaces,
-//             //                     hintStyle: TextStyle(
-//             //                       color: Colors.grey,
-//             //                       fontSize: 16,
-//             //                     ),
-//             //                     border: InputBorder.none,
-//             //                   ),
-//             //                 ),
-//             //               ),
-//             //               if (_searchController.text.isNotEmpty)
-//             //                 GestureDetector(
-//             //                   onTap: () => _searchController.clear(),
-//             //                   child: const Icon(
-//             //                     Icons.close,
-//             //                     color: Colors.grey,
-//             //                     size: 20,
-//             //                   ),
-//             //                 ),
-//             //             ],
-//             //           ),
-//             //         ),
-//             //       ),
-//             //       const SizedBox(width: 12),
-//             //       // QR Scanner Button
-//             //       GestureDetector(
-//             //         onTap: () => Navigator.push(
-//             //           context,
-//             //           MaterialPageRoute(
-//             //             builder: (_) => const QrScannerScreen(),
-//             //           ),
-//             //         ),
-//             //         child: Container(
-//             //           height: 50,
-//             //           width: 50,
-//             //           decoration: BoxDecoration(
-//             //             color: Theme.of(context).primaryColor,
-//             //             borderRadius: BorderRadius.circular(10),
-//             //           ),
-//             //           child: const Icon(
-//             //             Icons.qr_code_scanner,
-//             //             color: Colors.white,
-//             //             size: 28,
-//             //           ),
-//             //         ),
-//             //       ),
-//             //     ],
-//             //   ),
-//             // ),
-
-//             // --- FILTER DROPDOWN ---
-//             Padding(
-//               padding: const EdgeInsets.symmetric(
-//                 horizontal: 12.0,
-//                 vertical: 8.0,
-//               ),
-//               child: Row(
-//                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                 children: [
-//                   Text(
-//                     context.tr.events,
-//                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-//                   ),
-//                   DropdownButton<String>(
-//                     value: _currentSort,
-//                     dropdownColor: Theme.of(context).cardColor,
-//                     icon: Icon(
-//                       Icons.filter_list,
-//                       color: Theme.of(context).primaryColor,
-//                     ),
-//                     underline: const SizedBox(),
-//                     style: TextStyle(
-//                       color: Theme.of(context).textTheme.bodyMedium?.color,
-//                       fontSize: 14,
-//                     ),
-//                     items: [
-//                       DropdownMenuItem(
-//                         value: 'date',
-//                         child: Text(context.tr.byDate),
-//                       ),
-//                       DropdownMenuItem(
-//                         value: 'popularity',
-//                         child: Text(context.tr.byPopularity),
-//                       ),
-//                     ],
-//                     onChanged: _changeSort,
-//                   ),
-//                 ],
-//               ),
-//             ),
-
-//             // --- MAIN LIST ---
-//             Expanded(
-//               child: _isLoading && _allEvents.isEmpty
-//                   ? const Center(child: CircularProgressIndicator())
-//                   : _errorMessage != null && _allEvents.isEmpty
-//                   ? Container(
-//                       margin: EdgeInsets.symmetric(
-//                         horizontal: 16,
-//                         vertical: 5,
-//                       ),
-//                       height: 270,
-//                       child: Shimmer.fromColors(
-//                         baseColor: Theme.of(context).cardColor,
-//                         highlightColor: Theme.of(
-//                           context,
-//                         ).cardColor.withOpacity(0.5),
-//                         enabled: true,
-//                         child: ListView.builder(
-//                           itemCount: 4,
-//                           physics: const NeverScrollableScrollPhysics(),
-//                           scrollDirection: Axis.vertical,
-//                           itemBuilder: ((context, index) {
-//                             return Column(
-//                               children: [
-//                                 Row(
-//                                   children: [
-//                                     Container(
-//                                       margin: EdgeInsets.symmetric(
-//                                         horizontal: 5,
-//                                         vertical: 10,
-//                                       ),
-//                                       height: 60,
-//                                       width: 60,
-//                                       decoration: BoxDecoration(
-//                                         color: Theme.of(context).cardColor,
-//                                         borderRadius: BorderRadius.circular(70),
-//                                       ),
-//                                     ),
-//                                     Column(
-//                                       children: [
-//                                         Container(
-//                                           margin: EdgeInsets.symmetric(
-//                                             horizontal: 5,
-//                                             vertical: 10,
-//                                           ),
-//                                           height: 30,
-//                                           width: 180,
-//                                           decoration: BoxDecoration(
-//                                             color: Theme.of(context).cardColor,
-//                                             borderRadius: BorderRadius.circular(
-//                                               10,
-//                                             ),
-//                                           ),
-//                                         ),
-//                                       ],
-//                                     ),
-//                                   ],
-//                                 ),
-//                                 Container(
-//                                   margin: EdgeInsets.symmetric(
-//                                     horizontal: 5,
-//                                     vertical: 10,
-//                                   ),
-//                                   height: 90,
-//                                   width: 250,
-//                                   decoration: BoxDecoration(
-//                                     color: Theme.of(context).cardColor,
-//                                     borderRadius: BorderRadius.circular(10),
-//                                   ),
-//                                 ),
-//                               ],
-//                             );
-//                           }),
-//                         ),
-//                       ),
-//                     )
-//                   : _displayedEvents.isEmpty
-//                   ? Center(
-//                       child: Text(
-//                         context.tr.noPostsFound,
-//                         style: TextStyle(color: Colors.grey),
-//                       ),
-//                     )
-//                   : RefreshIndicator(
-//                       onRefresh: _refresh,
-//                       color: Theme.of(context).primaryColor,
-//                       backgroundColor: Theme.of(
-//                         context,
-//                       ).scaffoldBackgroundColor,
-//                       child: ListView.separated(
-//                         controller: _scrollController,
-//                         physics: const AlwaysScrollableScrollPhysics(),
-//                         itemCount: _displayedEvents.length + 1,
-//                         separatorBuilder: (ctx, i) => const Divider(
-//                           color: Color.fromARGB(0, 158, 158, 158),
-//                           height: 0,
-//                           thickness: 0.5,
-//                         ),
-//                         itemBuilder: (context, index) {
-//                           if (index >= _displayedEvents.length) {
-//                             return _isLoading
-//                                 ? const Padding(
-//                                     padding: EdgeInsets.all(16.0),
-//                                     child: Center(
-//                                       child: CircularProgressIndicator(),
-//                                     ),
-//                                   )
-//                                 : const SizedBox(height: 50);
-//                           }
-
-//                           final r = _displayedEvents[index];
-//                           return Container(
-//                             margin: const EdgeInsets.symmetric(
-//                               vertical: 2,
-//                               horizontal: 9,
-//                             ),
-//                             decoration: BoxDecoration(
-//                               color: Theme.of(context).cardColor,
-//                               boxShadow: [
-//                                 BoxShadow(
-//                                   color: Colors.black.withOpacity(0.1),
-//                                   blurRadius: 4,
-//                                   offset: const Offset(0, 2),
-//                                 ),
-//                               ],
-//                             ),
-//                             child: Column(
-//                               crossAxisAlignment:
-//                                         CrossAxisAlignment.start,
-//                               children: [
-//                                 // Header (Organizer)
-//                                 Padding(
-//                                   padding: const EdgeInsets.symmetric(
-//                                     horizontal: 16.0,
-//                                     vertical: 8.0,
-//                                   ),
-//                                   child: Row(
-//                                     children: [
-//                                       r.organizer!.picture != null &&
-//                                               r.organizer!.picture!.isNotEmpty
-//                                           ? CircleAvatar(
-//                                               radius: 25,
-//                                               backgroundImage: NetworkImage(
-//                                                 r.organizer!.picture!,
-//                                               ),
-//                                               backgroundColor: Theme.of(
-//                                                 context,
-//                                               ).primaryColor,
-//                                             )
-//                                           : CircleAvatar(
-//                                               radius: 25,
-//                                               backgroundColor: Theme.of(
-//                                                 context,
-//                                               ).primaryColor,
-//                                               child: Center(
-//                                                 child: Text(
-//                                                   r
-//                                                               .organizer!
-//                                                               .name
-//                                                               ?.isNotEmpty ==
-//                                                           true
-//                                                       ? r.organizer!.name![0]
-//                                                             .toUpperCase()
-//                                                       : '?',
-//                                                   style: TextStyle(
-//                                                     color: Colors.white,
-//                                                     fontSize: 20,
-//                                                     fontWeight: FontWeight.bold,
-//                                                   ),
-//                                                 ),
-//                                               ),
-//                                             ),
-//                                       const SizedBox(width: 12),
-//                                       Expanded(
-//                                         child: Column(
-//                                           crossAxisAlignment:
-//                                               CrossAxisAlignment.start,
-//                                           children: [
-//                                             Text(
-//                                               r.organizer!.name!,
-//                                               style: TextStyle(
-//                                                 fontWeight: FontWeight.bold,
-//                                                 fontSize: 18,
-//                                                 color: Theme.of(
-//                                                   context,
-//                                                 ).textTheme.titleMedium?.color,
-//                                               ),
-//                                             ),
-//                                             const SizedBox(height: 4),
-//                                             Row(
-//                                               children: [
-//                                                 Text(
-//                                                   r
-//                                                       .organizer!
-//                                                       .typeBusiness!
-//                                                       .name!,
-//                                                   style: TextStyle(
-//                                                     color: Theme.of(context)
-//                                                         .textTheme
-//                                                         .bodyMedium
-//                                                         ?.color,
-//                                                     fontSize: 14,
-//                                                   ),
-//                                                 ),
-//                                                 Text(
-//                                                   ". ${timeago.format(r.createdAt!)}",
-//                                                   style: TextStyle(
-//                                                     color: Theme.of(context)
-//                                                         .textTheme
-//                                                         .bodyMedium
-//                                                         ?.color,
-//                                                     fontSize: 12,
-//                                                   ),
-//                                                 ),
-//                                                 const SizedBox(width: 8),
-//                                                 Icon(
-//                                                   Icons.public,
-//                                                   size: 14,
-//                                                   color: Theme.of(
-//                                                     context,
-//                                                   ).textTheme.bodyMedium?.color,
-//                                                 ),
-//                                               ],
-//                                             ),
-//                                           ],
-//                                         ),
-//                                       ),
-//                                       IconButton(
-//                                         icon: Icon(
-//                                           Icons.more_vert,
-//                                           color: Theme.of(
-//                                             context,
-//                                           ).textTheme.bodyMedium?.color,
-//                                         ),
-//                                         onPressed: () async {
-//                                           final selected =
-//                                               await showMenu<String>(
-//                                                 context: context,
-//                                                 position:
-//                                                     const RelativeRect.fromLTRB(
-//                                                       1000,
-//                                                       100,
-//                                                       0,
-//                                                       0,
-//                                                     ),
-//                                                 items: const [
-//                                                   PopupMenuItem(
-//                                                     value: 'report',
-//                                                     child: Row(
-//                                                       children: [
-//                                                         Icon(
-//                                                           Icons.flag_outlined,
-//                                                           size: 18,
-//                                                         ),
-//                                                         SizedBox(width: 8),
-//                                                         Text('Report Post'),
-//                                                       ],
-//                                                     ),
-//                                                   ),
-//                                                 ],
-//                                               );
-
-//                                           if (selected == 'report') {
-//                                             await bottomshetReportPost(context, r.id!);
-//                                           }
-//                                         },
-//                                       ),
-//                                     ],
-//                                   ),
-//                                 ),
-
-//                                 // Images
-//                                 // MultipleImageWidget(
-//                                 //   imageUrls: r.images ?? [],
-//                                 //   mainTitle: r.title!,
-//                                 //   mainSubtitle: r.description!,
-//                                 //   showFeatured: false,
-//                                 //   height: 250,
-//                                 //   spacing: 4,
-//                                 //   borderRadius: 0,
-//                                 // ),
-//                                MultipleImageWidget(
-//                                     imageUrls: r.images ?? [],
-//                                     mainTitle: r.title ?? '',
-//                                     mainSubtitle: r.description ?? '',
-//                                     showFeatured: false,
-//                                     height: 250,
-//                                     spacing: 4,
-//                                     borderRadius: 0,
-//                                     onImageTap: (index) {
-//                                       final urls = (r.images ?? [])
-//                                           .map((img) => img.image ?? '')
-//                                           .where((u) => u.isNotEmpty)
-//                                           .toList();
-//                                       _openImageViewer(
-//                                         context,
-//                                         images: urls,
-//                                         initialIndex: index,
-//                                         title: r.title ?? '',
-//                                       );
-//                                     },
-//                                   ),
-
-//                                 // Event Text Details
-//                                 Padding(
-//                                   padding: const EdgeInsets.only(
-//                                     left: 16.0,
-//                                     right: 16.0,
-//                                     top: 16.0,
-//                                   ),
-//                                   child: ReadMoreText(
-//                                     r.description!,
-//                                     trimMode: TrimMode.Line,
-//                                     trimLines: 2,
-//                                     colorClickableText: Theme.of(
-//                                       context,
-//                                     ).primaryColor,
-//                                     trimCollapsedText: 'Show more',
-//                                     trimExpandedText: 'Show less',
-//                                     moreStyle: TextStyle(
-//                                       fontSize: 14,
-//                                       fontWeight: FontWeight.bold,
-//                                       color: Theme.of(context).primaryColor,
-//                                     ),
-//                                   ),
-//                                 ),
-
-//                                 // Engagement Stats
-//                                 Padding(
-//                                   padding: const EdgeInsets.symmetric(
-//                                     horizontal: 16.0,
-//                                     vertical: 16.0,
-//                                   ),
-//                                   child: Row(
-//                                     children: [
-//                                       // Row(
-//                                       //   children: [
-//                                       //     r.isLiked
-//                                       //         ? Icon(
-//                                       //             Icons.favorite,
-//                                       //             color: Colors.red,
-//                                       //             size: 20,
-//                                       //           )
-//                                       //         : Icon(
-//                                       //             Icons.favorite_border,
-//                                       //             color: Theme.of(context)
-//                                       //                 .textTheme
-//                                       //                 .titleMedium
-//                                       //                 ?.color,
-//                                       //             size: 20,
-//                                       //           ),
-//                                       //     const SizedBox(width: 6),
-//                                       //     Text(
-//                                       //       "${r.likeCount} ${context.tr.likes}",
-//                                       //       style: const TextStyle(
-//                                       //         fontSize: 12,
-//                                       //       ),
-//                                       //     ),
-//                                       //   ],
-//                                       // ),
-//                                       Row(
-//   children: [
-//     AnimatedSwitcher(
-//       duration: const Duration(milliseconds: 200),
-//       transitionBuilder: (child, anim) =>
-//           ScaleTransition(scale: anim, child: child),
-//       child: Icon(
-//         _isLiked(r) ? Icons.favorite : Icons.favorite_border,
-//         key: ValueKey(_isLiked(r)),
-//         color: _isLiked(r)
-//             ? Colors.red
-//             : Theme.of(context).textTheme.titleMedium?.color,
-//         size: 20,
-//       ),
-//     ),
-//     const SizedBox(width: 6),
-//     Text(
-//       "${_likeCount(r)} ${context.tr.likes}",
-//       style: const TextStyle(fontSize: 12),
-//     ),
-//   ],
-// ),
-//                                       const Spacer(),
-//                                       Text(
-//                                         "${r.commentCount} ${context.tr.comments}",
-//                                         style: const TextStyle(fontSize: 12),
-//                                       ),
-//                                       const Spacer(),
-//                                       Text(
-//                                         "${r.shareCount} ${context.tr.shares}",
-//                                         style: const TextStyle(fontSize: 12),
-//                                       ),
-//                                     ],
-//                                   ),
-//                                 ),
-//                                 const Divider(height: 1, thickness: 0.5),
-
-//                                 // Action Buttons
-//                                 Padding(
-//                                   padding: const EdgeInsets.symmetric(
-//                                     horizontal: 16.0,
-//                                     vertical: 8.0,
-//                                   ),
-//                                   child: Row(
-//                                     mainAxisAlignment:
-//                                         MainAxisAlignment.spaceEvenly,
-//                                     children: [
-//                                      TextButton.icon(
-//                                     onPressed: () => _onLikeTapped(r),
-//                                     icon: Icon(
-//                                       _isLiked(r) ? Icons.favorite : Icons.favorite_border,
-//                                       color: _isLiked(r)
-//                                           ? Colors.red
-//                                           : Theme.of(context).textTheme.titleMedium?.color,
-//                                       size: 20,
-//                                     ),
-//                                     label: Text(
-//                                       context.tr.like,
-//                                       style: TextStyle(
-//                                         color: _isLiked(r)
-//                                             ? Colors.red
-//                                             : Theme.of(context).textTheme.titleMedium?.color,
-//                                         fontWeight: _isLiked(r) ? FontWeight.w600 : FontWeight.normal,
-//                                       ),
-//                                     ),
-//                                   ),
-//                                       const VerticalDivider(
-//                                         width: 1,
-//                                         indent: 8,
-//                                         endIndent: 8,
-//                                       ),
-//                                       TextButton.icon(
-//                                         onPressed: () {
-//                                           showModalBottomSheet(
-//                                             context: context,
-//                                             isScrollControlled: true,
-//                                             backgroundColor: Colors.transparent,
-//                                             enableDrag: true,
-//                                             isDismissible: true,
-//                                             builder: (context) =>
-//                                                 CommentsBottomSheet(
-//                                                   eventId: r.id!,
-//                                                 ),
-//                                           );
-//                                         },
-//                                         icon: Icon(
-//                                           Icons.comment_outlined,
-//                                           color: Theme.of(
-//                                             context,
-//                                           ).textTheme.titleMedium?.color,
-//                                           size: 20,
-//                                         ),
-//                                         label: Text(
-//                                           context.tr.comment,
-//                                           style: TextStyle(
-//                                             color: Theme.of(
-//                                               context,
-//                                             ).textTheme.titleMedium?.color,
-//                                           ),
-//                                         ),
-//                                       ),
-//                                       const VerticalDivider(
-//                                         width: 1,
-//                                         indent: 8,
-//                                         endIndent: 8,
-//                                       ),
-//                                       // TextButton.icon(
-//                                       //   onPressed: () {
-//                                       //     print('Start share');
-//                                       //     shareEvent(r.id!);
-//                                       //   },
-//                                       //   icon: Icon(
-//                                       //     Icons.share_outlined,
-//                                       //     color: Theme.of(
-//                                       //       context,
-//                                       //     ).textTheme.titleMedium?.color,
-//                                       //     size: 20,
-//                                       //   ),
-//                                       //   label: Text(
-//                                       //     context.tr.share,
-//                                       //     style: TextStyle(
-//                                       //       color: Theme.of(
-//                                       //         context,
-//                                       //       ).textTheme.titleMedium?.color,
-//                                       //     ),
-//                                       //   ),
-//                                       // ),
-//                                       TextButton.icon(
-//   onPressed: () async {
-//     try {
-//       debugPrint('Start share for event id=${r.id}');
-//       await shareEvent(r.id!);
-//       if (!context.mounted) return;
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         const SnackBar(content: Text('Share sheet opened')),
-//       );
-//     } catch (e, st) {
-//       debugPrint('Share failed: $e\n$st');
-//       print('Share failed: $e');
-//       if (!context.mounted) return;
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(
-//           content: Text('Share failed: $e'),
-//           backgroundColor: Colors.black,
-//         ),
-//       );
-//     }
-//   },
-//   icon: Icon(
-//     Icons.share_outlined,
-//     color: Theme.of(context).textTheme.titleMedium?.color,
-//     size: 20,
-//   ),
-//   label: Text(
-//     context.tr.share,
-//     style: TextStyle(
-//       color: Theme.of(context).textTheme.titleMedium?.color,
-//     ),
-//   ),
-// ),
-//                                     ],
-//                                   ),
-//                                 ),
-//                               ],
-//                             ),
-//                           );
-//                         },
-//                       ),
-//                     ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-@override
-Widget build(BuildContext context) {
-  return Scaffold(
-    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-    body: SafeArea(
-      child: RefreshIndicator(
-        onRefresh: _refresh,
-        color: Theme.of(context).primaryColor,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        child: CustomScrollView(
-          controller: _scrollController,
-          physics: const AlwaysScrollableScrollPhysics(),
-          slivers: [
-            // --- FILTER DROPDOWN & TITLE ---
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12.0,
-                  vertical: 8.0,
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      context.tr.events,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    DropdownButton<String>(
-                      value: _currentSort,
-                      dropdownColor: Theme.of(context).cardColor,
-                      icon: Icon(
-                        Icons.filter_list,
-                        color: Theme.of(context).primaryColor,
-                      ),
-                      underline: const SizedBox(),
-                      style: TextStyle(
-                        color: Theme.of(context).textTheme.bodyMedium?.color,
-                        fontSize: 14,
-                      ),
-                      items: [
-                        DropdownMenuItem(
-                          value: 'date',
-                          child: Text(context.tr.byDate),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: _refresh,
+          color: Theme.of(context).primaryColor,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+          child: CustomScrollView(
+            controller: _scrollController,
+            physics: const AlwaysScrollableScrollPhysics(),
+            slivers: [
+              // --- FILTER DROPDOWN & TITLE ---
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12.0,
+                    vertical: 8.0,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        context.tr.events,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
                         ),
-                        DropdownMenuItem(
-                          value: 'popularity',
-                          child: Text(context.tr.byPopularity),
+                      ),
+                      DropdownButton<String>(
+                        value: _currentSort,
+                        dropdownColor: Theme.of(context).cardColor,
+                        icon: Icon(
+                          Icons.filter_list,
+                          color: Theme.of(context).primaryColor,
                         ),
-                      ],
-                      onChanged: _changeSort,
-                    ),
-                  ],
+                        underline: const SizedBox(),
+                        style: TextStyle(
+                          color:
+                              Theme.of(context).textTheme.bodyMedium?.color,
+                          fontSize: 13,
+                        ),
+                        items: [
+                          DropdownMenuItem(
+                            value: 'date',
+                            child: Text(context.tr.byDate),
+                          ),
+                          DropdownMenuItem(
+                            value: 'popularity',
+                            child: Text(context.tr.byPopularity),
+                          ),
+                        ],
+                        onChanged: _changeSort,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
 
-            // --- MAIN LIST STATES ---
-            if (_isLoading && _allEvents.isEmpty)
-              // Loading State
-              const SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(child: CircularProgressIndicator()),
-              )
-            else if (_errorMessage != null && _allEvents.isEmpty)
-              // Error State (Shimmer)
-              SliverToBoxAdapter(
-                child: Container(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 5,
-                  ),
-                  height: 270,
-                  child: Shimmer.fromColors(
-                    baseColor: Theme.of(context).cardColor,
-                    highlightColor:
-                        Theme.of(context).cardColor.withOpacity(0.5),
-                    enabled: true,
-                    child: ListView.builder(
-                      itemCount: 4,
-                      physics: const NeverScrollableScrollPhysics(),
-                      scrollDirection: Axis.vertical,
-                      itemBuilder: (context, index) {
-                        return Column(
-                          children: [
-                            Row(
-                              children: [
-                                Container(
-                                  margin: const EdgeInsets.symmetric(
-                                    horizontal: 5,
-                                    vertical: 10,
-                                  ),
-                                  height: 60,
-                                  width: 60,
-                                  decoration: BoxDecoration(
-                                    color: Theme.of(context).cardColor,
-                                    borderRadius: BorderRadius.circular(70),
-                                  ),
-                                ),
-                                Column(
-                                  children: [
-                                    Container(
-                                      margin: const EdgeInsets.symmetric(
-                                        horizontal: 5,
-                                        vertical: 10,
-                                      ),
-                                      height: 30,
-                                      width: 180,
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).cardColor,
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
+              // --- MAIN LIST STATES ---
+              if (_isLoading && _allEvents.isEmpty)
+                // Loading State
+                const SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_errorMessage != null && _allEvents.isEmpty)
+                // Error State (Shimmer)
+                SliverToBoxAdapter(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 5,
+                    ),
+                    height: 270,
+                    child: Shimmer.fromColors(
+                      baseColor: Theme.of(context).cardColor,
+                      highlightColor:
+                          Theme.of(context).cardColor.withOpacity(0.5),
+                      enabled: true,
+                      child: ListView.builder(
+                        itemCount: 4,
+                        physics: const NeverScrollableScrollPhysics(),
+                        scrollDirection: Axis.vertical,
+                        itemBuilder: (context, index) {
+                          return Column(
+                            children: [
+                              Row(
+                                children: [
+                                  Container(
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 5,
+                                      vertical: 10,
                                     ),
-                                  ],
+                                    height: 60,
+                                    width: 60,
+                                    decoration: BoxDecoration(
+                                      color: Theme.of(context).cardColor,
+                                      borderRadius: BorderRadius.circular(70),
+                                    ),
+                                  ),
+                                  Column(
+                                    children: [
+                                      Container(
+                                        margin: const EdgeInsets.symmetric(
+                                          horizontal: 5,
+                                          vertical: 10,
+                                        ),
+                                        height: 30,
+                                        width: 180,
+                                        decoration: BoxDecoration(
+                                          color:
+                                              Theme.of(context).cardColor,
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 5,
+                                  vertical: 10,
+                                ),
+                                height: 90,
+                                width: 250,
+                                decoration: BoxDecoration(
+                                  color: Theme.of(context).cardColor,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                            ],
+                          );
+                        },
+                      ),
+                    ),
+                  ),
+                )
+              else if (_displayedEvents.isEmpty)
+                // Empty State
+                SliverFillRemaining(
+                  hasScrollBody: false,
+                  child: Center(
+                    child: Text(
+                      context.tr.noPostsFound,
+                      style: const TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                )
+              else
+                // --- EVENT LIST ---
+                SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      // Loading indicator at the bottom
+                      if (index >= _displayedEvents.length) {
+                        return _isLoading
+                            ? const Padding(
+                                padding: EdgeInsets.all(16.0),
+                                child: Center(
+                                  child: CircularProgressIndicator(),
+                                ),
+                              )
+                            : const SizedBox(height: 50);
+                      }
+
+                      final r = _displayedEvents[index];
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Container(
+                            margin: const EdgeInsets.symmetric(
+                              vertical: 2,
+                              horizontal: 9,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).cardColor,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.1),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
-                            Container(
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 5,
-                                vertical: 10,
-                              ),
-                              height: 90,
-                              width: 250,
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).cardColor,
-                                borderRadius: BorderRadius.circular(10),
-                              ),
-                            ),
-                          ],
-                        );
-                      },
-                    ),
-                  ),
-                ),
-              )
-            else if (_displayedEvents.isEmpty)
-              // Empty State
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: Center(
-                  child: Text(
-                    context.tr.noPostsFound,
-                    style: const TextStyle(color: Colors.grey),
-                  ),
-                ),
-              )
-            else
-              // --- EVENT LIST ---
-              SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    // Loading indicator at the bottom
-                    if (index >= _displayedEvents.length) {
-                      return _isLoading
-                          ? const Padding(
-                              padding: EdgeInsets.all(16.0),
-                              child: Center(
-                                child: CircularProgressIndicator(),
-                              ),
-                            )
-                          : const SizedBox(height: 50);
-                    }
-
-                    final r = _displayedEvents[index];
-                    return Container(
-                      margin: const EdgeInsets.symmetric(
-                        vertical: 2,
-                        horizontal: 9,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).cardColor,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // Header (Organizer)
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 8.0,
-                            ),
-                            child: Row(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                r.organizer!.picture != null &&
-                                        r.organizer!.picture!.isNotEmpty
-                                    ? CircleAvatar(
-                                        radius: 25,
-                                        backgroundImage: NetworkImage(
-                                          r.organizer!.picture!,
-                                        ),
-                                        backgroundColor:
-                                            Theme.of(context).primaryColor,
-                                      )
-                                    : CircleAvatar(
-                                        radius: 25,
-                                        backgroundColor:
-                                            Theme.of(context).primaryColor,
-                                        child: Center(
-                                          child: Text(
-                                            r.organizer!.name?.isNotEmpty ==
-                                                    true
-                                                ? r.organizer!.name![0]
-                                                    .toUpperCase()
-                                                : '?',
-                                            style: const TextStyle(
-                                              color: Colors.white,
-                                              fontSize: 20,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
+                                // Header (Organizer)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0,
+                                    vertical: 8.0,
+                                  ),
+                                  child: Row(
                                     children: [
-                                      Text(
-                                        r.organizer!.name!,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 18,
-                                          color: Theme.of(context)
-                                              .textTheme
-                                              .titleMedium
-                                              ?.color,
+                                      // r.organizer!.picture != null &&
+                                      //         r.organizer!.picture!.isNotEmpty
+                                      //     ? CircleAvatar(
+                                      //         radius: 20,
+                                      //         backgroundImage: NetworkImage(
+                                      //           r.organizer!.picture!,
+                                      //         ),
+                                      //         backgroundColor: Theme.of(
+                                      //           context,
+                                      //         ).primaryColor,
+                                      //       )
+                                      //     : CircleAvatar(
+                                      //         radius: 20,
+                                      //         backgroundColor: Theme.of(
+                                      //           context,
+                                      //         ).primaryColor,
+                                      //         child: Center(
+                                      //           child: Text(
+                                      //             r.organizer!.name
+                                      //                         ?.isNotEmpty ==
+                                      //                     true
+                                      //                 ? r
+                                      //                     .organizer!
+                                      //                     .name![0]
+                                      //                     .toUpperCase()
+                                      //                 : '?',
+                                      //             style: const TextStyle(
+                                      //               color: Colors.white,
+                                      //               fontSize: 18,
+                                      //               fontWeight:
+                                      //                   FontWeight.bold,
+                                      //             ),
+                                      //           ),
+                                      //         ),
+                                      //       ),
+                                      Stack(
+  clipBehavior: Clip.none,
+  children: [
+    r.organizer!.picture != null &&
+            r.organizer!.picture!.isNotEmpty
+        ? CircleAvatar(
+            radius: 20,
+            backgroundImage: CachedNetworkImageProvider(
+              r.organizer!.picture!,
+            ),
+            backgroundColor: Theme.of(context).primaryColor,
+          )
+        : CircleAvatar(
+            radius: 20,
+            backgroundColor: Theme.of(context).primaryColor,
+            child: Center(
+              child: Text(
+                r.organizer!.name?.isNotEmpty == true
+                    ? r.organizer!.name![0].toUpperCase()
+                    : '?',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ),
+    // ✅ Tier badge overlay
+    Positioned(
+      bottom: -1, // Shifts the badge down slightly
+      right: -3, // Shifts the badge right slightly
+      child: ScallopedTierBadge(
+        tierLabel: r.organizer!.tier, // 'vip', 'vvp', 'free'
+        size: 18, // Small size for the badge to match the 20px avatar
+      ),
+    ),
+  ],
+),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              r.organizer!.name!,
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                                color: Theme.of(context)
+                                                    .textTheme
+                                                    .titleMedium
+                                                    ?.color,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Row(
+                                              children: [
+                                                Text(
+                                                  r.organizer!.typeBusiness!
+                                                      .name!,
+                                                  style: TextStyle(
+                                                    color: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyMedium
+                                                        ?.color,
+                                                    fontSize: 12,
+                                                  ),
+                                                ),
+                                                Text(
+                                                  ". ${timeago.format(r.createdAt!)}",
+                                                  style: TextStyle(
+                                                    color: Theme.of(context)
+                                                        .textTheme
+                                                        .bodyMedium
+                                                        ?.color,
+                                                    fontSize: 10,
+                                                  ),
+                                                ),
+                                                const SizedBox(width: 8),
+                                                Icon(
+                                                  Icons.public,
+                                                  size: 14,
+                                                  color: Theme.of(context)
+                                                      .textTheme
+                                                      .bodyMedium
+                                                      ?.color,
+                                                ),
+                                              ],
+                                            ),
+                                          ],
                                         ),
                                       ),
-                                      const SizedBox(height: 4),
+                                      // IconButton(
+                                      //   icon: Icon(
+                                      //     Icons.more_vert,
+                                      //     color: Theme.of(context)
+                                      //         .textTheme
+                                      //         .bodyMedium
+                                      //         ?.color,
+                                      //   ),
+                                      //   onPressed: () async {
+                                      //     final selected =
+                                      //         await showMenu<String>(
+                                      //       context: context,
+                                      //       position: const RelativeRect
+                                      //           .fromLTRB(1000, 100, 0, 0),
+                                                
+                                      //       items: const [
+                                      //         PopupMenuItem(
+                                      //           value: 'report',
+                                      //           child: Row(
+                                      //             children: [
+                                      //               Icon(
+                                      //                 Icons.flag_outlined,
+                                      //                 size: 18,
+                                      //               ),
+                                      //               SizedBox(width: 8),
+                                      //               Text('Report Post'),
+                                      //             ],
+                                      //           ),
+                                      //         ),
+                                      //       ],
+                                      //     );
+
+                                      //     if (selected == 'report') {
+                                      //       await bottomshetReportPost(
+                                      //           context, r.id!);
+                                      //     }
+                                      //   },
+                                      // ),
+                                      Builder(
+  builder: (buttonContext) => IconButton(
+    icon: Icon(
+      Icons.more_vert,
+      color: Theme.of(context).textTheme.bodyMedium?.color,
+    ),
+    onPressed: () async {
+      // ✅ Compute the popup position from the button itself
+      final RenderBox button =
+          buttonContext.findRenderObject() as RenderBox;
+      final RenderBox overlay = Navigator.of(context)
+          .overlay!
+          .context
+          .findRenderObject() as RenderBox;
+
+      final Offset topLeft = button.localToGlobal(
+        Offset.zero,
+        ancestor: overlay,
+      );
+      final Offset bottomRight = button.localToGlobal(
+        button.size.bottomRight(Offset.zero),
+        ancestor: overlay,
+      );
+
+      final position = RelativeRect.fromRect(
+        Rect.fromPoints(
+          // Anchor the menu's top-left just under the icon
+          Offset(bottomRight.dx, bottomRight.dy + 4),
+          Offset(topLeft.dx, topLeft.dy),
+        ),
+        Offset.zero & overlay.size,
+      );
+
+      final selected = await showMenu<String>(
+        context: context,
+        position: position,
+        color: Theme.of(context).cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        items: const [
+          PopupMenuItem(
+            value: 'report',
+            child: Row(
+              children: [
+                Icon(Icons.flag_outlined, size: 18),
+                SizedBox(width: 8),
+                Text('Report Post'),
+              ],
+            ),
+          ),
+        ],
+      );
+
+      if (selected == 'report') {
+        await bottomshetReportPost(context, r.id!);
+      }
+    },
+  ),
+),
+                                    ],
+                                  ),
+                                ),
+
+                                // Images
+                                MultipleImageWidget(
+                                  imageUrls: r.images ?? [],
+                                  mainTitle: r.title ?? '',
+                                  mainSubtitle: r.description ?? '',
+                                  showFeatured: false,
+                                  height: 250,
+                                  spacing: 4,
+                                  borderRadius: 0,
+                                  onImageTap: (index) {
+                                    final urls = (r.images ?? [])
+                                        .map((img) => img.image ?? '')
+                                        .where((u) => u.isNotEmpty)
+                                        .toList();
+                                    _openImageViewer(
+                                      context,
+                                      images: urls,
+                                      initialIndex: index,
+                                      title: r.title ?? '',
+                                    );
+                                  },
+                                ),
+
+                                // Event Text Details
+                                Padding(
+                                  padding: const EdgeInsets.only(
+                                    left: 16.0,
+                                    right: 16.0,
+                                    top: 16.0,
+                                  ),
+                                  child: ReadMoreText(
+                                    r.description!,
+                                    trimMode: TrimMode.Line,
+                                    trimLines: 2,
+                                    colorClickableText:
+                                        Theme.of(context).primaryColor,
+                                    trimCollapsedText: 'Show more',
+                                    trimExpandedText: 'Show less',
+                                    moreStyle: TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.bold,
+                                      color: Theme.of(context).primaryColor,
+                                    ),
+                                  ),
+                                ),
+
+                                // Engagement Stats
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0,
+                                    vertical: 16.0,
+                                  ),
+                                  child: Row(
+                                    children: [
                                       Row(
                                         children: [
-                                          Text(
-                                            r.organizer!.typeBusiness!.name!,
-                                            style: TextStyle(
-                                              color: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyMedium
-                                                  ?.color,
-                                              fontSize: 14,
+                                          AnimatedSwitcher(
+                                            duration: const Duration(
+                                                milliseconds: 200),
+                                            transitionBuilder: (child, anim) =>
+                                                ScaleTransition(
+                                                    scale: anim,
+                                                    child: child),
+                                            child: Icon(
+                                              _isLiked(r)
+                                                  ? Icons.thumb_up
+                                                  : Icons
+                                                      .thumb_up_alt_outlined,
+                                              key: ValueKey(_isLiked(r)),
+                                              color: _isLiked(r)
+                                                  ? Theme.of(context)
+                                                      .primaryColor
+                                                  : Theme.of(context)
+                                                      .textTheme
+                                                      .titleMedium
+                                                      ?.color,
+                                              size: 18,
                                             ),
                                           ),
+                                          const SizedBox(width: 4),
                                           Text(
-                                            ". ${timeago.format(r.createdAt!)}",
-                                            style: TextStyle(
-                                              color: Theme.of(context)
-                                                  .textTheme
-                                                  .bodyMedium
-                                                  ?.color,
-                                              fontSize: 12,
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Icon(
-                                            Icons.public,
-                                            size: 14,
-                                            color: Theme.of(context)
-                                                .textTheme
-                                                .bodyMedium
-                                                ?.color,
+                                            "${_likeCount(r)} ${context.tr.likes}",
+                                            style: const TextStyle(
+                                                fontSize: 10),
                                           ),
                                         ],
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        "${r.commentCount} ${context.tr.comments}",
+                                        style:
+                                            const TextStyle(fontSize: 10),
+                                      ),
+                                      const Spacer(),
+                                      Text(
+                                        "${r.shareCount} ${context.tr.shares}",
+                                        style:
+                                            const TextStyle(fontSize: 10),
                                       ),
                                     ],
                                   ),
                                 ),
-                                IconButton(
-                                  icon: Icon(
-                                    Icons.more_vert,
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .bodyMedium
-                                        ?.color,
+                                const Divider(height: 1, thickness: 0.5),
+
+                                // Action Buttons
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16.0,
+                                    vertical: 8.0,
                                   ),
-                                  onPressed: () async {
-                                    final selected = await showMenu<String>(
-                                      context: context,
-                                      position:
-                                          const RelativeRect.fromLTRB(
-                                            1000,
-                                            100,
-                                            0,
-                                            0,
-                                          ),
-                                      items: const [
-                                        PopupMenuItem(
-                                          value: 'report',
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                Icons.flag_outlined,
-                                                size: 18,
-                                              ),
-                                              SizedBox(width: 8),
-                                              Text('Report Post'),
-                                            ],
+                                  child: Row(
+                                    mainAxisAlignment:
+                                        MainAxisAlignment.spaceEvenly,
+                                    children: [
+                                      TextButton.icon(
+                                        onPressed: () => _onLikeTapped(r),
+                                        icon: Icon(
+                                          _isLiked(r)
+                                              ? Icons.thumb_up
+                                              : Icons.thumb_up_alt_outlined,
+                                          color: _isLiked(r)
+                                              ? Theme.of(context)
+                                                  .primaryColor
+                                              : Theme.of(context)
+                                                  .textTheme
+                                                  .titleMedium
+                                                  ?.color,
+                                          size: 18,
+                                        ),
+                                        label: Text(
+                                          context.tr.like,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: _isLiked(r)
+                                                ? Theme.of(context)
+                                                    .primaryColor
+                                                : Theme.of(context)
+                                                    .textTheme
+                                                    .titleMedium
+                                                    ?.color,
+                                            fontWeight: _isLiked(r)
+                                                ? FontWeight.w600
+                                                : FontWeight.normal,
                                           ),
                                         ),
-                                      ],
-                                    );
-
-                                    if (selected == 'report') {
-                                      await bottomshetReportPost(
-                                          context, r.id!);
-                                    }
-                                  },
-                                ),
-                              ],
-                            ),
-                          ),
-
-                          // Images
-                          MultipleImageWidget(
-                            imageUrls: r.images ?? [],
-                            mainTitle: r.title ?? '',
-                            mainSubtitle: r.description ?? '',
-                            showFeatured: false,
-                            height: 250,
-                            spacing: 4,
-                            borderRadius: 0,
-                            onImageTap: (index) {
-                              final urls = (r.images ?? [])
-                                  .map((img) => img.image ?? '')
-                                  .where((u) => u.isNotEmpty)
-                                  .toList();
-                              _openImageViewer(
-                                context,
-                                images: urls,
-                                initialIndex: index,
-                                title: r.title ?? '',
-                              );
-                            },
-                          ),
-
-                          // Event Text Details
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              left: 16.0,
-                              right: 16.0,
-                              top: 16.0,
-                            ),
-                            child: ReadMoreText(
-                              r.description!,
-                              trimMode: TrimMode.Line,
-                              trimLines: 2,
-                              colorClickableText:
-                                  Theme.of(context).primaryColor,
-                              trimCollapsedText: 'Show more',
-                              trimExpandedText: 'Show less',
-                              moreStyle: TextStyle(
-                                fontSize: 14,
-                                fontWeight: FontWeight.bold,
-                                color: Theme.of(context).primaryColor,
-                              ),
-                            ),
-                          ),
-
-                          // Engagement Stats
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 16.0,
-                            ),
-                            child: Row(
-                              children: [
-                                Row(
-                                  children: [
-                                    AnimatedSwitcher(
-                                      duration: const Duration(
-                                          milliseconds: 200),
-                                      transitionBuilder: (child, anim) =>
-                                          ScaleTransition(
-                                              scale: anim, child: child),
-                                      child: Icon(
-                                        _isLiked(r)
-                                            ? Icons.favorite
-                                            : Icons.favorite_border,
-                                        key: ValueKey(_isLiked(r)),
-                                        color: _isLiked(r)
-                                            ? Colors.red
-                                            : Theme.of(context)
-                                                .textTheme
-                                                .titleMedium
-                                                ?.color,
-                                        size: 20,
                                       ),
-                                    ),
-                                    const SizedBox(width: 6),
-                                    Text(
-                                      "${_likeCount(r)} ${context.tr.likes}",
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  ],
-                                ),
-                                const Spacer(),
-                                Text(
-                                  "${r.commentCount} ${context.tr.comments}",
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                                const Spacer(),
-                                Text(
-                                  "${r.shareCount} ${context.tr.shares}",
-                                  style: const TextStyle(fontSize: 12),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Divider(height: 1, thickness: 0.5),
-
-                          // Action Buttons
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 8.0,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                              children: [
-                                TextButton.icon(
-                                  onPressed: () => _onLikeTapped(r),
-                                  icon: Icon(
-                                    _isLiked(r)
-                                        ? Icons.favorite
-                                        : Icons.favorite_border,
-                                    color: _isLiked(r)
-                                        ? Colors.red
-                                        : Theme.of(context)
-                                            .textTheme
-                                            .titleMedium
-                                            ?.color,
-                                    size: 20,
-                                  ),
-                                  label: Text(
-                                    context.tr.like,
-                                    style: TextStyle(
-                                      color: _isLiked(r)
-                                          ? Colors.red
-                                          : Theme.of(context)
+                                      const VerticalDivider(
+                                        width: 1,
+                                        indent: 8,
+                                        endIndent: 8,
+                                      ),
+                                      TextButton.icon(
+                                        onPressed: () {
+                                          showModalBottomSheet(
+                                            context: context,
+                                            isScrollControlled: true,
+                                            backgroundColor:
+                                                Colors.transparent,
+                                            enableDrag: true,
+                                            isDismissible: true,
+                                            builder: (context) =>
+                                                CommentsBottomSheet(
+                                              eventId: r.id!,
+                                            ),
+                                          );
+                                        },
+                                        icon: Icon(
+                                          Icons.comment_outlined,
+                                          color: Theme.of(context)
                                               .textTheme
                                               .titleMedium
                                               ?.color,
-                                      fontWeight: _isLiked(r)
-                                          ? FontWeight.w600
-                                          : FontWeight.normal,
-                                    ),
-                                  ),
-                                ),
-                                const VerticalDivider(
-                                  width: 1,
-                                  indent: 8,
-                                  endIndent: 8,
-                                ),
-                                TextButton.icon(
-                                  onPressed: () {
-                                    showModalBottomSheet(
-                                      context: context,
-                                      isScrollControlled: true,
-                                      backgroundColor: Colors.transparent,
-                                      enableDrag: true,
-                                      isDismissible: true,
-                                      builder: (context) =>
-                                          CommentsBottomSheet(
-                                        eventId: r.id!,
-                                      ),
-                                    );
-                                  },
-                                  icon: Icon(
-                                    Icons.comment_outlined,
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.color,
-                                    size: 20,
-                                  ),
-                                  label: Text(
-                                    context.tr.comment,
-                                    style: TextStyle(
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.color,
-                                    ),
-                                  ),
-                                ),
-                                const VerticalDivider(
-                                  width: 1,
-                                  indent: 8,
-                                  endIndent: 8,
-                                ),
-                                TextButton.icon(
-                                  onPressed: () async {
-                                    try {
-                                      debugPrint(
-                                          'Start share for event id=${r.id}');
-                                      await shareEvent(r.id!);
-                                      if (!context.mounted) return;
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        const SnackBar(
-                                            content:
-                                                Text('Share sheet opened')),
-                                      );
-                                    } catch (e, st) {
-                                      debugPrint('Share failed: $e\n$st');
-                                      if (!context.mounted) return;
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text('Share failed: $e'),
-                                          backgroundColor: Colors.black,
+                                          size: 18,
                                         ),
-                                      );
-                                    }
-                                  },
-                                  icon: Icon(
-                                    Icons.share_outlined,
-                                    color: Theme.of(context)
-                                        .textTheme
-                                        .titleMedium
-                                        ?.color,
-                                    size: 20,
-                                  ),
-                                  label: Text(
-                                    context.tr.share,
-                                    style: TextStyle(
-                                      color: Theme.of(context)
-                                          .textTheme
-                                          .titleMedium
-                                          ?.color,
-                                    ),
+                                        label: Text(
+                                          context.tr.comment,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.color,
+                                          ),
+                                        ),
+                                      ),
+                                      const VerticalDivider(
+                                        width: 1,
+                                        indent: 8,
+                                        endIndent: 8,
+                                      ),
+                                      TextButton.icon(
+                                        onPressed: () async {
+                                          try {
+                                            debugPrint(
+                                                'Start share for event id=${r.id}');
+                                            await shareEvent(r.id!);
+                                            if (!context.mounted) return;
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              const SnackBar(
+                                                  content: Text(
+                                                      'Share sheet opened')),
+                                            );
+                                          } catch (e, st) {
+                                            debugPrint(
+                                                'Share failed: $e\n$st');
+                                            if (!context.mounted) return;
+                                            ScaffoldMessenger.of(context)
+                                                .showSnackBar(
+                                              SnackBar(
+                                                content:
+                                                    Text('Share failed: $e'),
+                                                backgroundColor:
+                                                    Colors.black,
+                                              ),
+                                            );
+                                          }
+                                        },
+                                        icon: Icon(
+                                          Icons.share_outlined,
+                                          color: Theme.of(context)
+                                              .textTheme
+                                              .titleMedium
+                                              ?.color,
+                                          size: 18,
+                                        ),
+                                        label: Text(
+                                          context.tr.share,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: Theme.of(context)
+                                                .textTheme
+                                                .titleMedium
+                                                ?.color,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
                             ),
                           ),
+                          // ✅ Native video ad after every 5 posts
+                          if ((index + 1) % 5 == 0)_adsActive?SizedBox(): NativeVideoAdCard(),
                         ],
-                      ),
-                    );
-                  },
-                  // +1 for the loading footer
-                  childCount: _displayedEvents.length + 1,
+                      );
+                    },
+                    // +1 for the loading footer
+                    childCount: _displayedEvents.length + 1,
+                  ),
                 ),
-              ),
-          ],
+            ],
+          ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 
   // --- Sidebar Drawer ---
   Widget _buildSidebar() {
@@ -1502,6 +990,7 @@ Widget build(BuildContext context) {
     super.dispose();
   }
 }
+
 // ================================================================
 //  REPORT POST BOTTOM SHEET
 // ================================================================
@@ -1511,13 +1000,18 @@ Future<void> bottomshetReportPost(BuildContext context, int id) async {
 
   // -------- reason options --------
   final List<_ReportReason> reasons = const [
-    _ReportReason('spam',        'Spam or misleading',      Icons.report_gmailerrorred_rounded),
-    _ReportReason('harassment',  'Harassment or bullying',  Icons.person_off_rounded),
-    _ReportReason('hate',        'Hate speech',             Icons.block_rounded),
-    _ReportReason('violence',    'Violence or dangerous',   Icons.warning_amber_rounded),
-    _ReportReason('nudity',      'Nudity or sexual content',Icons.no_adult_content_rounded),
-    _ReportReason('false_info',  'False information',       Icons.fact_check_outlined),
-    _ReportReason('other',       'Something else',          Icons.more_horiz_rounded),
+    _ReportReason(
+        'spam', 'Spam or misleading', Icons.report_gmailerrorred_rounded),
+    _ReportReason('harassment', 'Harassment or bullying',
+        Icons.person_off_rounded),
+    _ReportReason('hate', 'Hate speech', Icons.block_rounded),
+    _ReportReason(
+        'violence', 'Violence or dangerous', Icons.warning_amber_rounded),
+    _ReportReason('nudity', 'Nudity or sexual content',
+        Icons.no_adult_content_rounded),
+    _ReportReason(
+        'false_info', 'False information', Icons.fact_check_outlined),
+    _ReportReason('other', 'Something else', Icons.more_horiz_rounded),
   ];
 
   String? selectedReason;
@@ -1569,7 +1063,8 @@ Future<void> bottomshetReportPost(BuildContext context, int id) async {
                         Container(
                           padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: Colors.red.withOpacity(isDark ? 0.18 : 0.10),
+                            color:
+                                Colors.red.withOpacity(isDark ? 0.18 : 0.10),
                             borderRadius: BorderRadius.circular(10),
                           ),
                           child: const Icon(
@@ -1594,7 +1089,7 @@ Future<void> bottomshetReportPost(BuildContext context, int id) async {
                               ),
                               const SizedBox(height: 2),
                               Text(
-                                'Post #$id',   // <-- shows the post id
+                                'Post #$id', // <-- shows the post id
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: theme.textTheme.bodyMedium?.color
@@ -1654,8 +1149,10 @@ Future<void> bottomshetReportPost(BuildContext context, int id) async {
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
                                     color: selected
-                                        ? theme.primaryColor.withOpacity(0.35)
-                                        : theme.dividerColor.withOpacity(0.25),
+                                        ? theme.primaryColor
+                                            .withOpacity(0.35)
+                                        : theme.dividerColor
+                                            .withOpacity(0.25),
                                     width: 1.2,
                                   ),
                                 ),
@@ -1666,7 +1163,8 @@ Future<void> bottomshetReportPost(BuildContext context, int id) async {
                                       size: 20,
                                       color: selected
                                           ? theme.primaryColor
-                                          : theme.textTheme.bodyMedium?.color
+                                          : theme.textTheme.bodyMedium
+                                              ?.color
                                               ?.withOpacity(0.7),
                                     ),
                                     const SizedBox(width: 12),
@@ -1687,8 +1185,8 @@ Future<void> bottomshetReportPost(BuildContext context, int id) async {
                                     ),
                                     AnimatedOpacity(
                                       opacity: selected ? 1 : 0,
-                                      duration:
-                                          const Duration(milliseconds: 150),
+                                      duration: const Duration(
+                                          milliseconds: 150),
                                       child: Icon(
                                         Icons.check_circle_rounded,
                                         size: 20,
@@ -1776,13 +1274,15 @@ Future<void> bottomshetReportPost(BuildContext context, int id) async {
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
-                                color: theme.dividerColor.withOpacity(0.35),
+                                color:
+                                    theme.dividerColor.withOpacity(0.35),
                               ),
                             ),
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(12),
                               borderSide: BorderSide(
-                                color: theme.dividerColor.withOpacity(0.35),
+                                color:
+                                    theme.dividerColor.withOpacity(0.35),
                               ),
                             ),
                             focusedBorder: OutlineInputBorder(
@@ -1801,83 +1301,93 @@ Future<void> bottomshetReportPost(BuildContext context, int id) async {
                         SizedBox(
                           width: double.infinity,
                           child: ElevatedButton.icon(
-                            onPressed: (selectedReason == null || isSubmitting)
-                                ? null
-                                : () async {
-                                    setSheetState(() => isSubmitting = true);
+                            onPressed:
+                                (selectedReason == null || isSubmitting)
+                                    ? null
+                                    : () async {
+                                        setSheetState(
+                                            () => isSubmitting = true);
 
-                                    try {
-                                      // 🔌 TODO: replace with your real API call
-                                     await ApiService().reportPost(
-                                              postId: id,
-                                              reason: selectedReason!,
-                                              note:   noteController.text.trim(),
-                                            );
+                                        try {
+                                          // 🔌 TODO: replace with your real API call
+                                          await ApiService().reportPost(
+                                            postId: id,
+                                            reason: selectedReason!,
+                                            note: noteController.text.trim(),
+                                          );
 
-                                      await Future.delayed(
-                                        const Duration(milliseconds: 700),
-                                      );
+                                          await Future.delayed(
+                                            const Duration(
+                                                milliseconds: 700),
+                                          );
 
-                                      if (!sheetCtx.mounted) return;
-                                      Navigator.of(sheetCtx).pop();
+                                          if (!sheetCtx.mounted) return;
+                                          Navigator.of(sheetCtx).pop();
 
-                                      if (!context.mounted) return;
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: const Row(
-                                            children: [
-                                              Icon(
-                                                Icons.check_circle_rounded,
-                                                color: Colors.white,
-                                                size: 20,
-                                              ),
-                                              SizedBox(width: 10),
-                                              Expanded(
-                                                child: Text(
-                                                  'Thanks — your report has been submitted.',
-                                                  style: TextStyle(
-                                                    fontWeight:
-                                                        FontWeight.w600,
+                                          if (!context.mounted) return;
+                                          ScaffoldMessenger.of(context)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: const Row(
+                                                children: [
+                                                  Icon(
+                                                    Icons
+                                                        .check_circle_rounded,
+                                                    color: Colors.white,
+                                                    size: 20,
                                                   ),
+                                                  SizedBox(width: 10),
+                                                  Expanded(
+                                                    child: Text(
+                                                      'Thanks — your report has been submitted.',
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w600,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                              backgroundColor:
+                                                  Colors.green.shade700,
+                                              behavior: SnackBarBehavior
+                                                  .floating,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                        12),
+                                              ),
+                                              duration: const Duration(
+                                                  seconds: 3),
+                                            ),
+                                          );
+                                        } catch (e) {
+                                          if (!sheetCtx.mounted) return;
+                                          setSheetState(
+                                              () => isSubmitting = false);
+                                          ScaffoldMessenger.of(sheetCtx)
+                                              .showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                'Could not submit report: $e',
+                                                style: const TextStyle(
+                                                  fontWeight:
+                                                      FontWeight.w600,
                                                 ),
                                               ),
-                                            ],
-                                          ),
-                                          backgroundColor:
-                                              Colors.green.shade700,
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                          duration: const Duration(
-                                            seconds: 3,
-                                          ),
-                                        ),
-                                      );
-                                    } catch (e) {
-                                      if (!sheetCtx.mounted) return;
-                                      setSheetState(() => isSubmitting = false);
-                                      ScaffoldMessenger.of(sheetCtx)
-                                          .showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Could not submit report: $e',
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.w600,
+                                              backgroundColor:
+                                                  Colors.red.shade700,
+                                              behavior: SnackBarBehavior
+                                                  .floating,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(
+                                                        12),
+                                              ),
                                             ),
-                                          ),
-                                          backgroundColor: Colors.red.shade700,
-                                          behavior: SnackBarBehavior.floating,
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                        ),
-                                      );
-                                    }
-                                  },
+                                          );
+                                        }
+                                      },
                             icon: isSubmitting
                                 ? const SizedBox(
                                     width: 18,
@@ -1905,8 +1415,8 @@ Future<void> bottomshetReportPost(BuildContext context, int id) async {
                                   Colors.red.withOpacity(0.3),
                               disabledForegroundColor:
                                   Colors.white.withOpacity(0.7),
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 14),
+                              padding: const EdgeInsets.symmetric(
+                                  vertical: 14),
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
@@ -1937,53 +1447,58 @@ class _ReportReason {
 
   const _ReportReason(this.key, this.label, this.icon);
 }
+
 // --- API SERVICE FOR EVENTS ---
 class ApiService {
-Future<void> reportPost({
-  required int postId,
-  required String reason,
-  String note = '',
-}) async {
-  final prefs = await SharedPreferences.getInstance();
-  final token = prefs.getString('token');
+  Future<void> reportPost({
+    required int postId,
+    required String reason,
+    String note = '',
+  }) async {
+    final prefs = await SharedPreferences.getInstance();
+    final token = prefs.getString('token');
 
-  final res = await http.post(
-    Uri.parse('https://qopera.app/prof/api/reports/'),
-    headers: {
-      'Content-Type': 'application/json',
-      if (token != null) 'Authorization': 'Token $token',
-    },
-    body: json.encode({
-      'post':   postId,
-      'reason': reason,
-      'note':   note,
-    }),
-  );
+    final res = await http.post(
+      Uri.parse('http://192.168.1.115:8000/prof/api/reports/'),
+      headers: {
+        'Content-Type': 'application/json',
+        if (token != null) 'Authorization': 'Token $token',
+      },
+      body: json.encode({
+        'post': postId,
+        'reason': reason,
+        'note': note,
+      }),
+    );
 
-  final body = json.decode(utf8.decode(res.bodyBytes));
+    final body = json.decode(utf8.decode(res.bodyBytes));
 
-  if (res.statusCode == 201) {
-    return; // success
+    if (res.statusCode == 201) {
+      return; // success
+    }
+    if (res.statusCode == 409) {
+      throw Exception(body['error'] ?? 'You already reported this post.');
+    }
+    throw Exception(body['error'] ?? 'Report failed (${res.statusCode})');
   }
-  if (res.statusCode == 409) {
-    throw Exception(body['error'] ?? 'You already reported this post.');
-  }
-  throw Exception(body['error'] ?? 'Report failed (${res.statusCode})');
-}
+
   Future<List<ResultEvent>> fetchEventsByDate(int pageNumber) async {
     final ref = await SharedPreferences.getInstance();
     String? token = ref.getString('token');
     try {
-      String url = 'https://qopera.app/api/events/?page=$pageNumber';
-      final response = await http.get(Uri.parse(url), headers: {
-        token?.isNotEmpty == true
-            ? 'Authorization': 'Token $token'
-            : ?null,
-        'Content-Type': 'application/json',
-      });
+      String url = 'http://192.168.1.115:8000/api/events/?page=$pageNumber';
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          if (token != null && token.isNotEmpty)
+            'Authorization': 'Token $token',
+          'Content-Type': 'application/json',
+        },
+      );
       print(url);
       if (response.statusCode == 200) {
         var map = jsonDecode(utf8.decode(response.bodyBytes));
+        print(map);
         return EventList.fromJson(map).results!;
       } else {
         throw Exception("Error: ${response.statusCode}");
@@ -1999,16 +1514,19 @@ Future<void> reportPost({
 
     try {
       String url =
-          'https://qopera.app/api/events/?sort_by=likes&page=$pageNumber';
-      final response = await http.get(Uri.parse(url), headers: {
-        'Content-Type': 'application/json',
-        token?.isNotEmpty == true
-            ? 'Authorization': 'Token $token'
-            : ?null,
-      });
+          'http://192.168.1.115:8000/api/events/?sort_by=likes&page=$pageNumber';
+      final response = await http.get(
+        Uri.parse(url),
+        headers: {
+          'Content-Type': 'application/json',
+          if (token != null && token.isNotEmpty)
+            'Authorization': 'Token $token',
+        },
+      );
       print(url);
       if (response.statusCode == 200) {
         var map = jsonDecode(utf8.decode(response.bodyBytes));
+        print(map);
         return EventList.fromJson(map).results!;
       } else {
         throw Exception("Error: ${response.statusCode}");
@@ -2026,7 +1544,7 @@ Future<bool> toggleEventLike(int eventId) async {
 
   try {
     final response = await http.post(
-      Uri.parse('https://qopera.app/api/events/$eventId/like/'),
+      Uri.parse('http://192.168.1.115:8000/api/events/$eventId/like/'),
       headers: {
         'Authorization': 'Token $token',
         'Content-Type': 'application/json',
@@ -2051,7 +1569,7 @@ Future<void> shareEventx(int eventId) async {
 
   try {
     final response = await http.post(
-      Uri.parse('https://qopera.app/api/events/$eventId/share/'),
+      Uri.parse('http://192.168.1.115:8000/api/events/$eventId/share/'),
       headers: {
         'Authorization': 'Token $token',
         'Content-Type': 'application/json',
@@ -2061,7 +1579,8 @@ Future<void> shareEventx(int eventId) async {
 
     if (response.statusCode == 200) {
       final data = json.decode(response.body);
-      final String shareText = data['description'] ?? 'Check out this event!';
+      final String shareText =
+          data['description'] ?? 'Check out this event!';
       final String shareUrl = data['share_url'] ?? '';
       final String shareImageUrl = data['images']['image'][0] ?? '';
       final String shareDate = data['date'] ?? '';
@@ -2090,7 +1609,7 @@ Future<void> shareEvent(int eventId) async {
 
   try {
     final response = await http.post(
-      Uri.parse('https://qopera.app/api/events/$eventId/share/'),
+      Uri.parse('http://192.168.1.115:8000/api/events/$eventId/share/'),
       headers: {
         'Authorization': 'Token $token',
         'Content-Type': 'application/json',
@@ -2115,9 +1634,8 @@ Future<void> shareEvent(int eventId) async {
 
       // Get organizer info
       final organizer = eventData['organizer'];
-      final String organizerName = organizer != null
-          ? organizer['name'] ?? ''
-          : '';
+      final String organizerName =
+          organizer != null ? organizer['name'] ?? '' : '';
 
       // Get share count from response
       final int shareCount = data['share_count'] ?? 0;
@@ -2158,7 +1676,8 @@ Future<void> shareEvent(int eventId) async {
       await Share.share(shareMessage, subject: 'Check out: $eventTitle');
     } else {
       final errorBody = json.decode(response.body);
-      final errorMessage = errorBody['error'] ?? 'Unknown error occurred';
+      final errorMessage =
+          errorBody['error'] ?? 'Unknown error occurred';
       throw Exception(
         'Failed to share event: ${response.statusCode} - $errorMessage',
       );

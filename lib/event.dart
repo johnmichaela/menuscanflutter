@@ -128,7 +128,7 @@ class _EventScreenState extends State<EventScreen> {
   //   try {
   //     final response = await http.get(
   //       Uri.parse(
-  //         'https://qopera.app/api/events/${eventId}/comments/?page=$page',
+  //         'http://192.168.1.115:8000 /api/events/${eventId}/comments/?page=$page',
   //       ),
   //       headers: {
   //         'Content-Type': 'application/json;charset=UTF-8',
@@ -183,7 +183,7 @@ class _EventScreenState extends State<EventScreen> {
   //   try {
   //     final response = await http.post(
   //       Uri.parse(
-  //         'https://qopera.app/api/events/${widget.eventId}/comments/',
+  //         'http://192.168.1.115:8000 /api/events/${widget.eventId}/comments/',
   //       ),
   //       headers: {
   //         'Content-Type': 'application/json;charset=UTF-8',
@@ -233,7 +233,7 @@ class _EventScreenState extends State<EventScreen> {
   //   try {
   //     final response = await http.delete(
   //       Uri.parse(
-  //         'https://qopera.app/api/events/${widget.eventId}/comments/$commentId/',
+  //         'http://192.168.1.115:8000 /api/events/${widget.eventId}/comments/$commentId/',
   //       ),
   //       headers: {
   //         'Content-Type': 'application/json;charset=UTF-8',
@@ -268,7 +268,7 @@ class _EventScreenState extends State<EventScreen> {
   //   try {
   //     final response = await http.patch(
   //       Uri.parse(
-  //         'https://qopera.app/api/events/${widget.eventId}/comments/$commentId/',
+  //         'http://192.168.1.115:8000 /api/events/${widget.eventId}/comments/$commentId/',
   //       ),
   //       headers: {
   //         'Content-Type': 'application/json;charset=UTF-8',

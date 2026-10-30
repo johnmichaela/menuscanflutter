@@ -1,3 +1,4 @@
+import 'package:ballon/screens/main/main_settings.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -56,7 +57,7 @@ class _AppDrawerState extends State<AppDrawer> {
   Future<void> _refreshFromApi(String token) async {
     try {
       final res = await http.get(
-        Uri.parse('https://qopera.app/prof/api-prof/'),
+        Uri.parse('http://192.168.1.115:8000 /prof/api-prof/'),
         headers: {
           'Authorization': 'Token $token',
           'Content-Type': 'application/json',
@@ -187,10 +188,7 @@ class _AppDrawerState extends State<AppDrawer> {
                     context,
                     Icons.settings_outlined,
                     context.tr.settings ?? 'Settings',
-                    () {
-                      Navigator.pop(context);
-                      // Navigator.pushNamed(context, '/settings');
-                    },
+                    ()=>_go(SettingsPage()),
                   ),
                   _drawerItem(
                     context,

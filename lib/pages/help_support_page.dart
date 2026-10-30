@@ -87,7 +87,7 @@ class _HelpSupportPageState extends State<HelpSupportPage> {
     try {
       // Add your API call here to submit support request
       // await http.post(
-      //   Uri.parse('https://qopera.app/api/support/'),
+      //   Uri.parse('http://192.168.1.115:8000 /api/support/'),
       //   body: {'message': _messageController.text},
       // );
       

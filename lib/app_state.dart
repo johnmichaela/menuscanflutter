@@ -7,7 +7,7 @@ import 'models.dart';
 import 'services/api_servicex.dart';
 
 /// Central app state for the customer app.
-class AppState extends ChangeNotifier {
+class AppInState extends ChangeNotifier {
   int currentIndex = 0;
   bool isDark = false;
   String? selectedLanguage = 'English';
@@ -105,8 +105,8 @@ class AppState extends ChangeNotifier {
     errorMessage = null;
     notifyListeners();
 
-    // Replace BASE_URL with your actual domain (e.g., https://qopera.app)
-    final uri = Uri.parse('https://qopera.app/prof/restaurants-high-rated/?search=$query');
+    // Replace BASE_URL with your actual domain (e.g., http://192.168.1.115:8000 )
+    final uri = Uri.parse('http://192.168.1.115:8000 /prof/restaurants-high-rated/?search=$query');
 
     // try {
     //   final response = await http.get(uri);

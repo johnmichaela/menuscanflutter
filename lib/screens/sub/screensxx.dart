@@ -197,7 +197,7 @@
 // //     final prefs = await SharedPreferences.getInstance();
 // //     final String? token = prefs.getString('token');
 
-// //     final url = Uri.parse('https://qopera.app/prof/api-prof/');
+// //     final url = Uri.parse('http://192.168.1.115:8000 /prof/api-prof/');
 
 // //     try {
 // //       final response = await http.get(url, headers: {
@@ -535,7 +535,7 @@
 // //             ClipRRect(
 // //               borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
 // //               child: Image.network(
-// //                 'https://qopera.app/${r.banner}',
+// //                 'http://192.168.1.115:8000 /${r.banner}',
 // //                 height: 90,
 // //                 width: double.infinity,
 // //                 fit: BoxFit.cover,
@@ -1671,7 +1671,7 @@
 //     final prefs = await SharedPreferences.getInstance();
 //     final String? token = prefs.getString('token');
 
-//     final url = Uri.parse('https://qopera.app/prof/api-prof/');
+//     final url = Uri.parse('http://192.168.1.115:8000 /prof/api-prof/');
 
 //     try {
 //       final response = await http.get(url, headers: {
@@ -2008,7 +2008,7 @@
 //               borderRadius:
 //                   const BorderRadius.vertical(top: Radius.circular(20)),
 //               child: Image.network(
-//                 'https://qopera.app/${r.banner}',
+//                 'http://192.168.1.115:8000 /${r.banner}',
 //                 height: 90,
 //                 width: double.infinity,
 //                 fit: BoxFit.cover,

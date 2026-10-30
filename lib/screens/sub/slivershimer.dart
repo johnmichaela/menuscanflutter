@@ -7,10 +7,10 @@ class SliverBusinessCardShimmerGrid extends StatelessWidget {
   const SliverBusinessCardShimmerGrid({
     super.key,
     this.itemCount = 6,
-    this.crossAxisCount = 2,
+    this.crossAxisCount = 3,
     this.crossAxisSpacing = 12,
     this.mainAxisSpacing = 12,
-    this.childAspectRatio = 0.92, // match your real grid
+    this.childAspectRatio = 0.82, // match your real grid
     this.borderRadius = 12,
     this.padding = const EdgeInsets.symmetric(horizontal: 16.0),
   });

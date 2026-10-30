@@ -106,7 +106,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
     final prefs = await SharedPreferences.getInstance();
     var request = http.MultipartRequest(
       'POST',
-      Uri.parse("https://qopera.app/prof/api-prof/create"),
+      Uri.parse("http://192.168.1.115:8000 /prof/api-prof/create"),
     );
     Map<String, String> headers = {
       "Content-type": "multipart/form-data",
@@ -201,7 +201,7 @@ class _CreateProfileScreenState extends State<CreateProfileScreen> {
     //show your own loading or progressing code here
     final prefs = await SharedPreferences.getInstance();
     String uploadurl =
-        "https://qopera.app/prof/api-prof/create";
+        "http://192.168.1.115:8000 /prof/api-prof/create";
 
     try {
       List<int> imageBytes = uploadimage!.readAsBytes() as List<int>;

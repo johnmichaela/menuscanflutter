@@ -1,5 +1,7 @@
 import 'package:ballon/models/resturants.dart';
 import 'package:flutter/material.dart';
+import 'package:ballon/l10n/app_strings.dart';
+import 'package:intl/intl.dart';
 // import 'models.dart';
 
 /// Padding extension for concise layout code.
@@ -126,17 +128,17 @@ class FoodCard extends StatelessWidget {
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
-  BoxShadow(
-    color: const Color.fromARGB(255, 122, 122, 122).withValues(alpha: 0.06),
-    blurRadius: 16,
-    offset: const Offset(0, 6),
-  ),
-  BoxShadow(
-    color: const Color.fromARGB(255, 102, 102, 102).withValues(alpha: 0.03),
-    blurRadius: 8,
-    offset: const Offset(0, 2),
-  ),
-],
+          BoxShadow(
+            color: const Color.fromARGB(255, 122, 122, 122).withValues(alpha: 0.06),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+          BoxShadow(
+            color: const Color.fromARGB(255, 102, 102, 102).withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
           // boxShadow: [
           //   BoxShadow(
           //     color: Colors.black.withValues(alpha: 0.04),
@@ -194,7 +196,7 @@ class FoodCard extends StatelessWidget {
                           foodName,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 15,
+                            fontSize: 13,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
@@ -203,35 +205,7 @@ class FoodCard extends StatelessWidget {
 
                       const SizedBox(width: 6),
 
-                      // Rating
-                      // Container(
-                      //   padding: const EdgeInsets.symmetric(
-                      //     horizontal: 6,
-                      //     vertical: 2,
-                      //   ),
-                      //   decoration: BoxDecoration(
-                      //     color: Theme.of(context).primaryColor,
-                      //     borderRadius: BorderRadius.circular(10),
-                      //   ),
-                        // child: Row(
-                        //   mainAxisSize: MainAxisSize.min,
-                        //   children: [
-                        //     const Icon(
-                        //       Icons.star,
-                        //       color: Colors.white,
-                        //       size: 10,
-                        //     ),
-                        //     Text(
-                        //       rating.toStringAsFixed(1),
-                        //       style: const TextStyle(
-                        //         color: Colors.white,
-                        //         fontSize: 10,
-                        //         fontWeight: FontWeight.bold,
-                        //       ),
-                        //     ),
-                        //   ],
-                        // ),
-                      // ),
+                     
                     ],
                   ),
 
@@ -252,55 +226,72 @@ class FoodCard extends StatelessWidget {
 
                   // Price
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    // mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        '$currency ${displayPrice.toStringAsFixed(0)}',
+                      if(price==0)
+                         Text(
+                        'Free',
                         style: TextStyle(
-                          color: Theme.of(context).primaryColor,
+                          color: const Color.fromARGB(255, 8, 214, 87),
                           fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                          fontSize: 12,
                         ),
                       ),
-
+                      if(price!=0)
+                      Text(
+                        '$currency ${NumberFormat.decimalPattern().format(displayPrice)}',
+                        // '$currency ${displayPrice.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          // color: Theme.of(context).primaryColor,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                        ),
+                      ),
+                     SizedBox(width: 5,),
                       // Original price when discounted
                       if (discountPrice != null)
                         Text(
-                          '$currency ${price.toStringAsFixed(0)}',
+                          '$currency ${NumberFormat.decimalPattern().format(price)}',
+                          // '$currency ${price.toStringAsFixed(0)}',
                           style: TextStyle(
                             color: Colors.grey.shade400,
-                            fontSize: 12,
+                            fontSize: 9,
                             decoration: TextDecoration.lineThrough,
                           ),
                         ),
+                        Spacer(),
+                        food.isAvailable!?
+                        Container(
+                          padding: EdgeInsets.symmetric(vertical: 4,horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: Color.fromARGB(255, 8, 214, 87).withOpacity(0.08),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color:Color.fromARGB(255, 8, 214, 87))
+
+                          ),
+                          child: Text(context.tr.available,style: TextStyle(color: Color.fromARGB(255, 8, 214, 87),fontSize: 10,fontWeight: FontWeight.w500),),):
+                           Container(
+                          padding: EdgeInsets.symmetric(vertical: 4,horizontal: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.red.withOpacity(0.06),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(color:Colors.red)
+
+                          ),
+                          child: Text(context.tr.unavailable,style: TextStyle(color: Colors.red,fontSize: 10,fontWeight: FontWeight.w500),),)
                     ],
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(width: 8),
+            const SizedBox(width: 5),
 Icon(
               Icons.arrow_forward_ios,
-              color: Theme.of(context).primaryColor,
+              color: Colors.grey.withOpacity(0.6),
               size: 20,
             ),
-            // Add button
-            // GestureDetector(
-            //   onTap: onAdd,
-            //   child: Container(
-            //     padding: const EdgeInsets.all(8),
-            //     decoration: BoxDecoration(
-            //       color: const Color(0xFFE71D36),
-            //       borderRadius: BorderRadius.circular(12),
-            //     ),
-            //     child: const Icon(
-            //       Icons.add,
-            //       color: Colors.white,
-            //       size: 20,
-            //     ),
-            //   ),
-            // ),
+           
           ],
         ),
       ),

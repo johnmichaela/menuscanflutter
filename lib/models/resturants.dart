@@ -160,6 +160,7 @@ class Pagination {
 // ============================================================
 class Result {
   final int? id;
+  final int?user;
   final String? name;
   final String? place;
   final String? bio;
@@ -176,13 +177,35 @@ class Result {
   final double? latitude;
   final double? longitude;
   final TypeBusiness? typeBusiness;
+  final String email;
+  final String phoneNumber;
+  final String countryCode;
+  final String qrCode;
+  final String shareCode;
+    final String tier;              // "free" | "vip" | "vvp"
+  final String tierLabel;
+  final DateTime? tierExpiresAt;
+  final bool tierAutoRenew;
+  final bool isTierActive;
+
+  final bool adsActive;
+  final String adsStatus;         // "inactive" | "active"
+  final bool adsIsActive;
+  final DateTime? adsExpiresAt;
+  final bool adsAutoRenew;
 
   /// ✅ NEW: list of events organized by this profile's user
   final List<EventOrganizer>? organizer;
 
   Result({
     this.id,
+    this.user,
     this.name,
+    required this.email,
+    required this.phoneNumber,
+    required this.countryCode,
+    required this.qrCode,
+    required this.shareCode,
     this.place,
     this.bio,
     this.picture,
@@ -199,11 +222,27 @@ class Result {
     this.longitude,
     this.typeBusiness,
     this.organizer,
+    required this.tier,
+    required this.tierLabel,
+    this.tierExpiresAt,
+    required this.tierAutoRenew,
+    required this.isTierActive,
+    required this.adsActive,
+    required this.adsStatus,
+    required this.adsIsActive,
+    this.adsExpiresAt,
+    required this.adsAutoRenew,
   });
 
   factory Result.fromJson(Map<String, dynamic> json) => Result(
         id: _parseInt(json["id"]),
+        user: _parseInt(json["user"]),
         name: json["name"],
+         email: json['email'] as String? ?? '',
+      phoneNumber: json['phone_number']?.toString() ?? '',
+      countryCode: json['country_code']?.toString() ?? '',
+      qrCode: json['qr_code'] as String? ?? '',
+      shareCode: json['share_code'] as String? ?? '',
         place: json["place"],
         bio: json["bio"],
         picture: json["picture"],
@@ -229,11 +268,31 @@ class Result {
             ? []
             : List<EventOrganizer>.from(
                 json["organizer"]!.map((x) => EventOrganizer.fromJson(x))),
+                 tier: json['tier'] ?? 'free',
+      tierLabel: json['tier_label'] ?? 'free',
+      tierExpiresAt: json['tier_expires_at'] != null
+          ? DateTime.tryParse(json['tier_expires_at'])
+          : null,
+      tierAutoRenew: json['tier_auto_renew'] ?? false,
+      isTierActive: json['is_tier_active'] ?? false,
+      adsActive: json['ads_active'] ?? false,
+      adsStatus: json['ads_status'] ?? 'inactive',
+      adsIsActive: json['ads_is_active'] ?? false,
+      adsExpiresAt: json['ads_expires_at'] != null
+          ? DateTime.tryParse(json['ads_expires_at'])
+          : null,
+      adsAutoRenew: json['ads_auto_renew'] ?? false,
       );
 
   Map<String, dynamic> toJson() => {
         "id": id,
+        "user":user,
         "name": name,
+        'email': email,
+        'country_code': countryCode,
+        'phone_number': phoneNumber,
+        'qr_code': qrCode,
+        'share_code': shareCode,
         "place": place,
         "bio": bio,
         "picture": picture,
@@ -254,6 +313,17 @@ class Result {
         "organizer": organizer == null
             ? []
             : List<dynamic>.from(organizer!.map((x) => x.toJson())),
+            "tier": tier,
+        "tier_label": tierLabel,
+        "tier_expires_at": tierExpiresAt?.toIso8601String(),
+        "tier_auto_renew": tierAutoRenew,
+        "is_tier_active": isTierActive,
+        "ads_active": adsActive,
+        "ads_status": adsStatus,
+        "ads_is_active": adsIsActive,
+        "ads_expires_at": adsExpiresAt?.toIso8601String(),
+        "ads_auto_renew": adsAutoRenew,
+
       };
 }
 

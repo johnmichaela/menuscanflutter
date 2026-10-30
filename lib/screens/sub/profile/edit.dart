@@ -1,637 +1,6 @@
-// import 'package:ballon/createprofile.dart';
-// import 'package:flutter/material.dart';
-// import 'package:http/http.dart' as http;
-// import 'dart:convert';
-// import 'dart:io'; // Required for File
-// import 'package:image_picker/image_picker.dart';
-// import 'package:shared_preferences/shared_preferences.dart';
-
-// // --- Paste your Profile model here (if not already in the file) ---
-// class Profile {
-//   final int? pk;
-//   final User? user;
-//   final String? name;
-//   final dynamic activity;
-//   final dynamic place;
-//   final String? picture;
-//   final int? phoneNumber;
-//   final String? email;
-//   final String? bio;
-//   final String? birthday;
-
-//   Profile({
-//     required this.pk,
-//     required this.user,
-//     required this.name,
-//     this.activity,
-//     this.place,
-//     this.picture,
-//     this.phoneNumber,
-//     this.email,
-//     this.bio,
-//     this.birthday,
-//   });
-
-//   factory Profile.fromJson(Map<String, dynamic> json) {
-//     return Profile(
-//       pk: json['pk'] as int,
-//       user: User.fromJson(json['user'] as Map<String, dynamic>),
-//       name: json['name'] as String? ?? '',
-//       activity: json['activity'],
-//       place: json['place'],
-//       picture: json['picture'] as String?,
-//       phoneNumber: json['phone_number'],
-//       email: json['email'] as String?,
-//       bio: json['bio'] as String?,
-//       birthday: json['birthday'] as String?,
-//     );
-//   }
-// }
-
-// class User {
-//   final String username;
-//   final String email;
-
-//   User({required this.username, required this.email});
-
-//   factory User.fromJson(Map<String, dynamic> json) {
-//     return User(
-//       username: json['username'] as String,
-//       email: json['email'] as String? ?? '',
-//     );
-//   }
-// }
-// // --- End of model ---
-
-// class EditProfileScreen extends StatefulWidget {
-//   final int? id;
-//    const EditProfileScreen({super.key, required this.id});
-
-//   @override
-//   State<EditProfileScreen> createState() => _EditProfileScreenState();
-// }
-
-// class _EditProfileScreenState extends State<EditProfileScreen> {
-//   final _formKey = GlobalKey<FormState>();
-//     late ScaffoldMessengerState scaffoldMessenger;
-//   // Controllers
-//   late TextEditingController _nameController;
-//   late TextEditingController _emailController;
-//   late TextEditingController _phoneController;
-//   late TextEditingController _locationController;
-//   late TextEditingController _bioController;
-//   late TextEditingController _usernameController;
-
-//   // Image Picker
-//   final ImagePicker _picker = ImagePicker();
-//   File? _pickedImage;
-
-//   bool _isLoading = true;
-//   bool _isSaving = false;
-//   String? _errorMessage;
-//   Profile? _currentProfile;
-
-//   // API URL for the specific profile (ID 9)
-//   late final String apiUrl = 'https://qopera.app/prof/api-prof/${widget.id}';
-
-//   @override
-//   void initState() {
-//     super.initState();
-//     getJsonData();
-//     _fetchProfile();
-//   }
-
-//   // Future<void> _fetchProfile() async {
-//   //   setState(() {
-//   //     _isLoading = true;
-//   //     _errorMessage = null;
-//   //   });
-//   // final prefs = await SharedPreferences.getInstance();
-//   // final String? token = prefs.getString('token');
-//   //   try {
-//   //     final response = await http.get(Uri.parse(apiUrl),
-//   //       headers: {
-//   //         'Authorization': 'Token $token',
-//   //         'Content-Type': 'application/json',
-//   //         'Accept': 'application/json',
-//   //       },
-//   //     );
-
-//   //     if (response.statusCode == 200) {
-//   //       final jsonData = jsonDecode(response.body);
-//   //       final profile = Profile.fromJson(jsonData);
-
-//   //       _nameController = TextEditingController(text: profile.name);
-//   //       _emailController = TextEditingController(text: profile.email ?? profile.user.email);
-//   //       _phoneController = TextEditingController(text: profile.phoneNumber ?? '');
-//   //       _locationController = TextEditingController(text: profile.place?.toString() ?? '');
-//   //       _bioController = TextEditingController(text: profile.bio ?? '');
-//   //       _usernameController = TextEditingController(text: profile.user.username);
-
-//   //       setState(() {
-//   //         _currentProfile = profile;
-//   //         _isLoading = false;
-//   //       });
-//   //     } else {
-//   //       throw Exception('Failed to load profile. Status: ${response.statusCode}');
-//   //     }
-//   //   } catch (e) {
-//   //     setState(() {
-//   //       _errorMessage = 'Error: $e';
-//   //       _isLoading = false;
-//   //     });
-//   //   }
-//   // }
-//   Future<void> _fetchProfile() async {
-//     setState(() {
-//       _isLoading = true;
-//       _errorMessage = null;
-//     });
-    
-//     final prefs = await SharedPreferences.getInstance();
-//     final String? token = prefs.getString('token');
-    
-//     try {
-//       final response = await http.get(Uri.parse(apiUrl),
-//         headers: {
-//           'Authorization': 'Token $token',
-//           'Content-Type': 'application/json',
-//           'Accept': 'application/json',
-//         },
-//       );
-
-//       if (response.statusCode == 200) {
-//         final jsonData = jsonDecode(response.body);
-        
-//         Profile profile;
-        
-//         // Handle if API returns a List
-//         if (jsonData is List) {
-//           print('Received a list of profiles: $jsonData');
-//           if (jsonData.isEmpty) {
-//             // No profile data found, go to Create
-//             _navigateToCreateProfile();
-//             return;
-//           }
-//           profile = Profile.fromJson(jsonData[0] as Map<String, dynamic>);
-//         } 
-//         // Handle if API returns a Map
-//         else if (jsonData is Map<String, dynamic>) {
-//           profile = Profile.fromJson(jsonData);
-//         } 
-//         else {
-//           throw Exception('Unexpected data format');
-//         }
-
-//         // CHECK IF PK IS NULL OR 0 HERE
-//         if (profile.name == null || profile.name == '') {
-//           _navigateToCreateProfile();
-//           return;
-//         }
-
-//         _nameController = TextEditingController(text: profile.name);
-//         _emailController = TextEditingController(text: profile.email ?? profile.user!.email);
-//         _phoneController = TextEditingController(text: profile.phoneNumber?.toString() ??'');
-//         _locationController = TextEditingController(text: profile.place?.toString() ?? '');
-//         _bioController = TextEditingController(text: profile.bio ?? '');
-//         _usernameController = TextEditingController(text: profile.user!.username);
-
-//         setState(() {
-//           _currentProfile = profile;
-//           _isLoading = false;
-//         });
-//       } else {
-//         throw Exception('Failed to load profile. Status: ${response.statusCode}');
-//       }
-//     } catch (e) {
-//       setState(() {
-//         _errorMessage = 'Error: $e';
-//         _isLoading = false;
-//       });
-//     }
-//   }
-
-//   // Helper method to navigate to CreateProfileScreen
-//   void _navigateToCreateProfile() {
-//     // Use addPostFrameCallback to ensure Navigator is ready before rebuilding
-//     WidgetsBinding.instance.addPostFrameCallback((_) {
-//       if (mounted) {
-//         Navigator.pushReplacement(
-//           context,
-//           MaterialPageRoute(
-//             builder: (context) =>  CreateProfileScreen(), // Ensure you import your CreateProfileScreen
-//           ),
-//         );
-//       }
-//     });
-//   }
-
-//  final List<Profile> _list = [];
-//   var loading = true;
-//   bool view = false;
-//   int valId = 0;
-//   Future<List<Profile?>> getJsonData() async {
-//     final prefs = await SharedPreferences.getInstance();
-
-//     // valId = prefs.getInt("profid")!.toInt();
-
-//     // setState(() {
-//     //   valId = prefs.getInt("profid")!.toInt();
-//     // });
-//     // print(';.................test val ' + valId.toString());
-//     final response = await http.get(
-//       Uri.parse("https://qopera.app/prof/api-prof/"),
-//       headers: {
-//         HttpHeaders.authorizationHeader: 'Token ${prefs.getString('token')}',
-//         'Content-Type': 'application/json;charset=UTF-8',
-//         'Accept': '*/*',
-//         'Allow': 'GET, OPTIONS',
-//         'Accept-Encoding': 'gzip, deflate, br',
-//         // 'Content-Type': 'application/json',
-//         // 'Accept': 'application/json',
-//         // 'Authorization': 'Token ${tokein()}',
-//       },
-//     );
-//     // valId = prefs.getInt("profid")!.toInt();
-//     if (response.statusCode == 200) {
-//       // If the call to the server was successful, parse the JSON
-//       List<dynamic> values = [];
-//       values = json.decode(response.body);
-//       print(response.body);
-//       if (values.isNotEmpty) {
-//         setState(() {
-//           for (int i = 0; i < values.length; i++) {
-//             if (values[i] != null) {
-//               Map<String, dynamic> map = values[i];
-//               _list.add(Profile.fromJson(map));
-//               debugPrint('Id-------${map['pk']} $_list');
-//               saveProfId(map['pk'], map['picture'], map['name']);
-//               // log('data: $_list');
-//             }
-//           }
-//           setState(() {
-//             loading = false;
-//             view = true;
-//           });
-//         });
-//         valId = prefs.getInt("profid")!.toInt();
-//       } else {
-//         print('shift to edit widget');
-//         // ignore: use_build_context_synchronously
-//         Navigator.push(
-//           context,
-//           MaterialPageRoute(
-//             builder: (context) => CreateProfileScreen(),
-//           ),
-//         );
-//         // Navigator.push( EditProfileScreen());
-//       }
-//       return _list;
-//     } else {
-//       print(response.body);
-//       print('change');
-//       setState(() {
-//         loading = false;
-//         view = false;
-//       });
-
-//       // If that call was not successful, throw an error.
-//       scaffoldMessenger.showSnackBar(SnackBar(content: Text("Try again")));
-//       throw Exception('Failed to load post ${response.body}');
-//     }
-//     // valId = prefs.getInt("profid")!.toInt();
-//   }
-
-//   saveProfId(int profid, String pic, name) async {
-//     SharedPreferences preferences = await SharedPreferences.getInstance();
-
-//     preferences.setInt("profid", profid);
-//     preferences.setString("picture", pic);
-//     preferences.setString("name", name);
-//     // preferences.setString("middlename", middlen);
-//     // preferences.setString("surname", surn);
-//     // preferences.setString("id", id.toString());
-//     // ignore: deprecated_member_use
-//     preferences.commit();
-//     scaffoldMessenger.showSnackBar(SnackBar(content: Text("Comfirmed")));
-//     setState(() {
-//       valId = profid;
-//     });
-//   }
-
-//   // NEW: Function to pick an image
-//   Future<void> _pickImage() async {
-
-//     try {
-//       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-//       if (image != null) {
-//         setState(() {
-//           _pickedImage = File(image.path);
-//         });
-//       }
-//     } catch (e) {
-//       ScaffoldMessenger.of(context).showSnackBar(
-//         SnackBar(content: Text('Failed to pick image: $e')),
-//       );
-//     }
-//   }
-
-//   // UPDATED: Multipart Request to handle file upload
-//   Future<void> _saveProfile() async {
-//      final prefs = await SharedPreferences.getInstance();
-//   final String? token = prefs.getString('token');
-//     if (!_formKey.currentState!.validate()) return;
-
-//     setState(() {
-//       _isSaving = true;
-//       _errorMessage = null;
-//     });
-
-//     try {
-//       var request = http.MultipartRequest('PUT', Uri.parse(apiUrl));
-//        request.headers.addAll({
-//     'Authorization': 'Token $token',
-//     'Accept': 'application/json',
-//     // 'Content-Type': 'application/json', // ❌ REMOVE THIS LINE
-//   });
-
-  
-//       // Add text fields
-//       request.fields['name'] = _nameController.text;
-//       request.fields['email'] = _emailController.text;
-//       request.fields['phone_number'] = _phoneController.text;
-//       request.fields['place'] = _locationController.text;
-//       request.fields['bio'] = _bioController.text;
-      
-//       // Add nested user object (backend dependent)
-//       request.fields['user'] = jsonEncode({
-//         "username": _usernameController.text,
-//         "email": _emailController.text
-//       });
-
-//       // Add image file if picked
-//       if (_pickedImage != null) {
-//         request.files.add(await http.MultipartFile.fromPath(
-//           'picture', // This must match the field name your backend expects (e.g., 'picture', 'profile_pic')
-//           _pickedImage!.path,
-//         ));
-//       }
-
-//       // Send request
-//       final streamedResponse = await request.send();
-//       final response = await http.Response.fromStream(streamedResponse);
-
-//       if (response.statusCode == 200 || response.statusCode == 204) {
-//         ScaffoldMessenger.of(context).showSnackBar(
-//           const SnackBar(content: Text('Profile updated successfully!')),
-//         );
-//         Navigator.pop(context, true);
-//       } else {
-//         throw Exception('Failed to update. Status: ${response.statusCode} - ${response.body}');
-//       }
-//     } catch (e) {
-//       setState(() {
-//         _errorMessage = 'Failed to save: $e';
-//       });
-//     } finally {
-//       setState(() {
-//         _isSaving = false;
-//       });
-//     }
-//   }
-
-//   @override
-//   void dispose() {
-//     _nameController.dispose();
-//     _emailController.dispose();
-//     _phoneController.dispose();
-//     _locationController.dispose();
-//     _bioController.dispose();
-//     _usernameController.dispose();
-//     super.dispose();
-//   }
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         backgroundColor: const Color(0xFFB71C1C),
-//         elevation: 0,
-//         leading: IconButton(
-//           icon: const Icon(Icons.arrow_back, color: Colors.white),
-//           onPressed: () => Navigator.pop(context),
-//         ),
-//         title: const Text(
-//           'Edit Profile',
-//           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-//         ),
-//         actions: [
-//           TextButton(
-//             onPressed: _isSaving ? null : _saveProfile,
-//             child: _isSaving
-//                 ? const SizedBox(
-//                     width: 20, height: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-//                 : const Text('Save', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-//           ),
-//         ],
-//       ),
-//       body: _isLoading
-//           ? const Center(child: CircularProgressIndicator())
-//           : _errorMessage != null && _currentProfile == null
-//               ? Center(
-//                   child: Padding(
-//                     padding: const EdgeInsets.all(20.0),
-//                     child: Column(
-//                       mainAxisAlignment: MainAxisAlignment.center,
-//                       children: [
-//                         Text(_errorMessage!, textAlign: TextAlign.center),
-//                         const SizedBox(height: 20),
-//                         ElevatedButton(onPressed: _fetchProfile, child: const Text('Retry')),
-//                       ],
-//                     ),
-//                   ),
-//                 )
-//               : SingleChildScrollView(
-//                   child: Column(
-//                     children: [
-//                       // Edit Avatar Section
-//                       GestureDetector(
-//                         onTap: _pickImage, // Make the avatar clickable
-//                         child: Container(
-//                           width: double.infinity,
-//                           color: const Color(0xFFB71C1C),
-//                           padding: const EdgeInsets.only(bottom: 30),
-//                           child: Column(
-//                             children: [
-//                               Stack(
-//                                 alignment: Alignment.bottomRight,
-//                                 children: [
-//                                   CircleAvatar(
-//                                     radius: 45,
-//                                     // Display picked image or fetched image or fallback
-//                                     backgroundImage: _pickedImage != null
-//                                         ? FileImage(_pickedImage!)
-//                                         : NetworkImage(_currentProfile?.picture ?? 'https://i.pravatar.cc/300'),
-//                                   ),
-//                                   Container(
-//                                     padding: const EdgeInsets.all(4),
-//                                     decoration: const BoxDecoration(
-//                                       color: Colors.white,
-//                                       shape: BoxShape.circle,
-//                                     ),
-//                                     child: const Icon(Icons.camera_alt_outlined, color: Color(0xFFB71C1C), size: 16),
-//                                   ),
-//                                 ],
-//                               ),
-//                               const SizedBox(height: 10),
-//                               const Text(
-//                                 'Tap on the photo to change',
-//                                 style: TextStyle(color: Colors.white70, fontSize: 12),
-//                               ),
-//                             ],
-//                           ),
-//                         ),
-//                       ),
-
-//                       // Form Fields
-//                       Padding(
-//                         padding: const EdgeInsets.all(20.0),
-//                         child: Form(
-//                           key: _formKey,
-//                           child: Column(
-//                             children: [
-//                               _buildInputField(
-//                                 label: 'Full Name',
-//                                 controller: _nameController,
-//                                 validator: (val) => val!.isEmpty ? 'Name cannot be empty' : null,
-//                               ),
-//                               const SizedBox(height: 15),
-//                               _buildInputField(
-//                                 label: 'Email',
-//                                 controller: _emailController,
-//                                 validator: (val) => !val!.contains('@') ? 'Enter a valid email' : null,
-//                               ),
-//                               const SizedBox(height: 15),
-//                               _buildInputField(
-//                                 label: 'Phone Number',
-//                                 controller: _phoneController,
-//                                 keyboardType: TextInputType.phone,
-//                               ),
-//                               const SizedBox(height: 15),
-//                               _buildInputField(
-//                                 label: 'Location',
-//                                 controller: _locationController,
-//                                 suffixIcon: Icons.location_on_outlined,
-//                                 iconColor: Colors.grey,
-//                               ),
-//                               const SizedBox(height: 15),
-                              
-//                               _buildInputField(
-//                                 label: 'Bio',
-//                                 controller: _bioController,
-//                                 maxLines: 3,
-//                               ),
-
-//                               const SizedBox(height: 15),
-//                               Container(
-//                                 decoration: BoxDecoration(
-//                                   color: Colors.white,
-//                                   borderRadius: BorderRadius.circular(12),
-//                                   border: Border.all(color: Colors.grey[300]!),
-//                                 ),
-//                                 child: ListTile(
-//                                   title: const Text('Change Password', style: TextStyle(fontSize: 15)),
-//                                   trailing: const Icon(Icons.chevron_right, color: Colors.grey),
-//                                   onTap: () {},
-//                                 ),
-//                               ),
-
-//                               if (_errorMessage != null) ...[
-//                                 const SizedBox(height: 20),
-//                                 Text(
-//                                   _errorMessage!,
-//                                   style: const TextStyle(color: Colors.red),
-//                                   textAlign: TextAlign.center,
-//                                 ),
-//                               ],
-
-//                               const SizedBox(height: 30),
-//                               SizedBox(
-//                                 width: double.infinity,
-//                                 height: 50,
-//                                 child: ElevatedButton(
-//                                   onPressed: _isSaving ? null : _saveProfile,
-//                                   style: ElevatedButton.styleFrom(
-//                                     backgroundColor: const Color(0xFFB71C1C),
-//                                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-//                                   ),
-//                                   child: _isSaving
-//                                       ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white))
-//                                       : const Text(
-//                                           'Save Changes',
-//                                           style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-//                                         ),
-//                                 ),
-//                               ),
-//                             ],
-//                           ),
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ),
-//     );
-//   }
-
-//   Widget _buildInputField({
-//     required String label,
-//     required TextEditingController controller,
-//     IconData? suffixIcon,
-//     Color? iconColor,
-//     TextInputType keyboardType = TextInputType.text,
-//     String? Function(String?)? validator,
-//     int maxLines = 1,
-//   }) {
-//     return Container(
-//       padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
-//       decoration: BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: BorderRadius.circular(12),
-//         border: Border.all(color: Colors.grey[300]!),
-//       ),
-//       child: Column(
-//         crossAxisAlignment: CrossAxisAlignment.start,
-//         children: [
-//           Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-//           const SizedBox(height: 5),
-//           Row(
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             children: [
-//               Expanded(
-//                 child: TextFormField(
-//                   controller: controller,
-//                   keyboardType: keyboardType,
-//                   validator: validator,
-//                   maxLines: maxLines,
-//                   decoration: const InputDecoration(
-//                     border: InputBorder.none,
-//                     isDense: true,
-//                     contentPadding: EdgeInsets.zero,
-//                   ),
-//                   style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-//                 ),
-//               ),
-//               if (suffixIcon != null) Icon(suffixIcon, color: iconColor, size: 20),
-//             ],
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
 import 'package:ballon/createprofile.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'dart:io';
@@ -639,15 +8,54 @@ import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:ballon/l10n/app_strings.dart';
 
-// --- Profile Model with proper null handling ---
+// ==========================================================
+//  COUNTRY MODEL (no library)
+// ==========================================================
+class Country {
+  final String name;
+  final String iso;
+  final String dial;
+  final String flag;
+
+  const Country({
+    required this.name,
+    required this.iso,
+    required this.dial,
+    required this.flag,
+  });
+
+  factory Country.fromJson(Map<String, dynamic> j) => Country(
+        name: j['name'] as String,
+        iso: j['iso'] as String,
+        dial: j['dial'] as String,
+        flag: j['flag'] as String,
+      );
+
+  static List<Country>? _cache;
+
+  static Future<List<Country>> load() async {
+    if (_cache != null) return _cache!;
+    final raw = await rootBundle.loadString('assets/data/countries.json');
+    final list = (json.decode(raw) as List)
+        .map((e) => Country.fromJson(e as Map<String, dynamic>))
+        .toList();
+    _cache = list;
+    return list;
+  }
+}
+
+// ==========================================================
+//  PROFILE MODEL
+// ==========================================================
 class Profile {
-  final int? pk; // Changed to nullable
-  final User? user; // Changed to nullable
-  final String? name; // Changed to nullable
+  final int? pk;
+  final User? user;
+  final String? name;
   final dynamic activity;
   final dynamic place;
   final String? picture;
-  final int? phoneNumber;
+  final String? phoneNumber;
+  final String? countryCode;
   final String? email;
   final String? bio;
   final String? birthday;
@@ -660,6 +68,7 @@ class Profile {
     this.place,
     this.picture,
     this.phoneNumber,
+    this.countryCode,
     this.email,
     this.bio,
     this.birthday,
@@ -668,12 +77,15 @@ class Profile {
   factory Profile.fromJson(Map<String, dynamic> json) {
     return Profile(
       pk: json['pk'] as int?,
-      user: json['user'] != null ? User.fromJson(json['user'] as Map<String, dynamic>) : null,
+      user: json['user'] != null
+          ? User.fromJson(json['user'] as Map<String, dynamic>)
+          : null,
       name: json['name']?.toString() ?? '',
       activity: json['activity'],
       place: json['place'],
       picture: json['picture'] as String?,
-      phoneNumber: json['phone_number'] as int?,
+      phoneNumber: json['phone_number']?.toString(),
+      countryCode: json['country_code']?.toString(),
       email: json['email'] as String?,
       bio: json['bio'] as String?,
       birthday: json['birthday'] as String?,
@@ -695,8 +107,11 @@ class User {
   }
 }
 
+// ==========================================================
+//  SCREEN
+// ==========================================================
 class EditProfileScreen extends StatefulWidget {
-  final int? id; // Made nullable
+  final int? id;
   const EditProfileScreen({super.key, this.id});
 
   @override
@@ -705,7 +120,7 @@ class EditProfileScreen extends StatefulWidget {
 
 class _EditProfileScreenState extends State<EditProfileScreen> {
   final _formKey = GlobalKey<FormState>();
-  
+
   // Controllers
   late TextEditingController _nameController;
   late TextEditingController _emailController;
@@ -713,6 +128,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _locationController;
   late TextEditingController _bioController;
   late TextEditingController _usernameController;
+
+  // Country state
+  List<Country> _countries = [];
+  Country? _selectedCountry;
+  final TextEditingController _countryCodeController =
+      TextEditingController(text: '+255');
 
   // Image Picker
   final ImagePicker _picker = ImagePicker();
@@ -724,14 +145,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Profile? _currentProfile;
   int? _profileId;
 
-  // API URL
   late final String apiUrl;
+  static const String _baseUrl = 'http://192.168.1.115:8000';
 
   @override
   void initState() {
     super.initState();
     _initializeControllers();
-    _fetchProfile();
+    _loadCountries().then((_) => _fetchProfile());
   }
 
   void _initializeControllers() {
@@ -743,27 +164,48 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _usernameController = TextEditingController();
   }
 
+  // ==========================================================
+  //  LOAD COUNTRIES (Tanzania default)
+  // ==========================================================
+  Future<void> _loadCountries() async {
+    final list = await Country.load();
+
+    // Default = Tanzania (+255)
+    Country defaultCountry = list.firstWhere(
+      (c) => c.iso == 'TZ',
+      orElse: () => list.first,
+    );
+
+    if (!mounted) return;
+    setState(() {
+      _countries = list;
+      _selectedCountry ??= defaultCountry;
+      _countryCodeController.text = _selectedCountry!.dial;
+    });
+  }
+
+  // ==========================================================
+  //  FETCH PROFILE
+  // ==========================================================
   Future<void> _fetchProfile() async {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
     });
-    
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final String? token = prefs.getString('token');
-      
-      // Get profile ID from SharedPreferences if not provided
+
       _profileId = widget.id ?? prefs.getInt('profid');
-      
+
       if (_profileId == null) {
-        // No profile ID found, navigate to create
         _navigateToCreateProfile();
         return;
       }
 
-      apiUrl = 'https://qopera.app/prof/api-prof/$_profileId';
-      
+      apiUrl = '$_baseUrl/prof/api-prof/$_profileId';
+
       final response = await http.get(
         Uri.parse(apiUrl),
         headers: {
@@ -775,15 +217,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (response.statusCode == 200) {
         final jsonData = jsonDecode(response.body);
-        
+
         Profile? profile;
-        print(apiUrl);
-        // Handle different response formats
         if (jsonData is List) {
-          if (jsonData.isEmpty) {
-            // _navigateToCreateProfile();
-            return;
-          }
+          if (jsonData.isEmpty) return;
           profile = Profile.fromJson(jsonData[0] as Map<String, dynamic>);
         } else if (jsonData is Map<String, dynamic>) {
           profile = Profile.fromJson(jsonData);
@@ -791,13 +228,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           throw Exception('Unexpected data format');
         }
 
-        // Check if profile exists
-        if (profile.name == null || profile.name!.isEmpty) {
-          // _navigateToCreateProfile();
-          return;
-        }
+        if (profile.name == null || profile.name!.isEmpty) return;
 
-        // Update controllers with profile data
         _nameController.text = profile.name ?? '';
         _emailController.text = profile.email ?? profile.user?.email ?? '';
         _phoneController.text = profile.phoneNumber?.toString() ?? '';
@@ -805,18 +237,36 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _bioController.text = profile.bio ?? '';
         _usernameController.text = profile.user?.username ?? '';
 
+        // Restore saved country_code, else keep Tanzania
+        if (profile.countryCode != null && profile.countryCode!.isNotEmpty) {
+          _countryCodeController.text = profile.countryCode!;
+          if (_countries.isNotEmpty) {
+            try {
+              _selectedCountry = _countries.firstWhere(
+                (c) => c.dial == profile?.countryCode,
+              );
+            } catch (_) {}
+          }
+        } else {
+          _countryCodeController.text = '+255';
+          if (_countries.isNotEmpty) {
+            try {
+              _selectedCountry = _countries.firstWhere((c) => c.iso == 'TZ');
+            } catch (_) {}
+          }
+        }
+
         setState(() {
           _currentProfile = profile;
           _isLoading = false;
         });
       } else if (response.statusCode == 404) {
-        // Profile not found, navigate to create
         _navigateToCreateProfile();
       } else {
         throw Exception('Failed to load profile. Status: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error fetching profile: $e');
+      debugPrint('Error fetching profile: $e');
       setState(() {
         _errorMessage = 'Error: $e';
         _isLoading = false;
@@ -829,29 +279,51 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) => CreateProfileScreen(),
-          ),
+          MaterialPageRoute(builder: (context) => CreateProfileScreen()),
         );
       }
     });
   }
 
+  // ==========================================================
+  //  IMAGE PICKER
+  // ==========================================================
   Future<void> _pickImage() async {
     try {
       final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
       if (image != null) {
-        setState(() {
-          _pickedImage = File(image.path);
-        });
+        setState(() => _pickedImage = File(image.path));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick image: $e')),
-      );
+      _showSnack('Failed to pick image: $e');
     }
   }
 
+  // ==========================================================
+  //  COUNTRY PICKER
+  // ==========================================================
+  Future<void> _openCountryPicker() async {
+    final picked = await showModalBottomSheet<Country>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Theme.of(context).cardColor,
+      builder: (_) => _CountryPickerSheet(
+        countries: _countries,
+        selected: _selectedCountry,
+      ),
+    );
+
+    if (picked != null) {
+      setState(() {
+        _selectedCountry = picked;
+        _countryCodeController.text = picked.dial;
+      });
+    }
+  }
+
+  // ==========================================================
+  //  SAVE PROFILE
+  // ==========================================================
   Future<void> _saveProfile() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -863,41 +335,28 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     try {
       final prefs = await SharedPreferences.getInstance();
       final String? token = prefs.getString('token');
-      
-      if (token == null) {
-        throw Exception('Not authenticated');
-      }
+      if (token == null) throw Exception('Not authenticated');
 
-      // Determine if we're creating or updating
       final bool isCreating = _profileId == null;
-      final String url = isCreating 
-          ? 'https://qopera.app/prof/api-prof/' 
-          : 'https://qopera.app/prof/api-prof/$_profileId';
-      
+      final String url = isCreating
+          ? '$_baseUrl/prof/api-prof/'
+          : '$_baseUrl/prof/api-prof/$_profileId';
       final String method = isCreating ? 'POST' : 'PUT';
-      print(url+method);
+
       var request = http.MultipartRequest(method, Uri.parse(url));
       request.headers.addAll({
         'Authorization': 'Token $token',
         'Accept': 'application/json',
       });
 
-      // Add text fields
+      // Text fields
       request.fields['name'] = _nameController.text;
       request.fields['email'] = _emailController.text;
-      request.fields['phone_number'] = _phoneController.text;
+      request.fields['country_code'] = _countryCodeController.text.trim();
+      request.fields['phone_number'] = _phoneController.text.trim();
       request.fields['place'] = _locationController.text;
       request.fields['bio'] = _bioController.text;
 
-      // Add nested user object if needed
-      // if (_usernameController.text.isNotEmpty) {
-      //   request.fields['user'] = jsonEncode({
-      //     "username": _usernameController.text,
-      //     "email": _emailController.text
-      //   });
-      // }
-
-      // Add image file if picked
       if (_pickedImage != null) {
         request.files.add(await http.MultipartFile.fromPath(
           'picture',
@@ -905,12 +364,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ));
       }
 
-      // Send request
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
-      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 204) {
-        // Save profile ID if created
+      if (response.statusCode == 200 ||
+          response.statusCode == 201 ||
+          response.statusCode == 204) {
         if (isCreating && response.statusCode == 201) {
           final data = jsonDecode(response.body);
           if (data['pk'] != null) {
@@ -918,31 +377,30 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           }
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(isCreating ? 'Profile created successfully!' : 'Profile updated successfully!'),
-            backgroundColor: Colors.green,
-          ),
+        _showSnack(
+          isCreating
+              ? 'Profile created successfully!'
+              : 'Profile updated successfully!',
+          color: Colors.green,
         );
         Navigator.pop(context, true);
       } else {
-        throw Exception('Failed to save. Status: ${response.statusCode} - ${response.body}');
+        throw Exception(
+            'Failed to save. Status: ${response.statusCode} - ${response.body}');
       }
     } catch (e) {
-      setState(() {
-        _errorMessage = 'Failed to save: $e';
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      setState(() => _errorMessage = 'Failed to save: $e');
+      _showSnack('Error: $e', color: Colors.red);
     } finally {
-      setState(() {
-        _isSaving = false;
-      });
+      setState(() => _isSaving = false);
     }
+  }
+
+  void _showSnack(String msg, {Color? color}) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(msg), backgroundColor: color ?? Colors.black87),
+    );
   }
 
   @override
@@ -953,9 +411,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _locationController.dispose();
     _bioController.dispose();
     _usernameController.dispose();
+    _countryCodeController.dispose();
     super.dispose();
   }
 
+  // ==========================================================
+  //  BUILD
+  // ==========================================================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -966,31 +428,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
-        title:  Text(
-           context.tr.editProfile,
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        title: Text(
+          context.tr.editProfile,
+          style: const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        actions: [
-          // TextButton(
-          //   onPressed: _isSaving ? null : _saveProfile,
-          //   child: _isSaving
-          //       ? const SizedBox(
-          //           width: 20,
-          //           height: 20,
-          //           child: CircularProgressIndicator(
-          //             color: Colors.white,
-          //             strokeWidth: 2,
-          //           ),
-          //         )
-          //       : const Text(
-          //           '',
-          //           style: TextStyle(
-          //             color: Colors.white,
-          //             fontWeight: FontWeight.bold,
-          //           ),
-          //         ),
-          // ),
-        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -1001,7 +443,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(Icons.error_outline, size: 60, color: Colors.red),
+                        const Icon(Icons.error_outline,
+                            size: 60, color: Colors.red),
                         const SizedBox(height: 16),
                         Text(
                           _errorMessage!,
@@ -1012,12 +455,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         ElevatedButton(
                           onPressed: _fetchProfile,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFFB71C1C),
+                            backgroundColor:
+                                Theme.of(context).primaryColor,
                           ),
-                          child: const Text(
-                            'Retry',
-                            style: TextStyle(color: Colors.white),
-                          ),
+                          child: const Text('Retry',
+                              style: TextStyle(color: Colors.white)),
                         ),
                       ],
                     ),
@@ -1027,13 +469,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   padding: const EdgeInsets.only(bottom: 20),
                   child: Column(
                     children: [
-                      // Edit Avatar Section
+                      // Avatar
                       GestureDetector(
                         onTap: _pickImage,
                         child: Container(
                           width: double.infinity,
                           color: Theme.of(context).primaryColor,
-                          padding: const EdgeInsets.only(bottom: 30, top: 20),
+                          padding:
+                              const EdgeInsets.only(bottom: 30, top: 20),
                           child: Column(
                             children: [
                               Stack(
@@ -1047,9 +490,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       backgroundColor: Colors.grey[200],
                                       backgroundImage: _pickedImage != null
                                           ? FileImage(_pickedImage!)
-                                          : (_currentProfile?.picture != null
-                                              ? NetworkImage(_currentProfile!.picture!)
-                                              : const NetworkImage('https://i.pravatar.cc/300')),
+                                          : (_currentProfile?.picture !=
+                                                      null &&
+                                                  _currentProfile!
+                                                      .picture!.isNotEmpty
+                                              ? NetworkImage(
+                                                  _currentProfile!.picture!)
+                                              : const NetworkImage(
+                                                      'https://i.pravatar.cc/300')
+                                                  as ImageProvider),
                                       onBackgroundImageError: (_, __) {},
                                     ),
                                   ),
@@ -1059,25 +508,27 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                       color: Colors.white,
                                       shape: BoxShape.circle,
                                     ),
-                                    child:  Icon(
+                                    child: Icon(
                                       Icons.camera_alt_outlined,
-                                      color: Theme.of(context).primaryColor,
+                                      color:
+                                          Theme.of(context).primaryColor,
                                       size: 16,
                                     ),
                                   ),
                                 ],
                               ),
                               const SizedBox(height: 10),
-                              Text( context.tr.tapPhotoToChange
-                              ,
-                                style: TextStyle(color: Colors.white70, fontSize: 12),
+                              Text(
+                                context.tr.tapPhotoToChange,
+                                style: const TextStyle(
+                                    color: Colors.white70, fontSize: 12),
                               ),
                             ],
                           ),
                         ),
                       ),
 
-                      // Form Fields
+                      // Form
                       Padding(
                         padding: const EdgeInsets.all(20.0),
                         child: Form(
@@ -1085,72 +536,49 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           child: Column(
                             children: [
                               _buildInputField(
-                                label:  context.tr.fullName,
+                                label: context.tr.fullName,
                                 controller: _nameController,
-                                validator: (val) => val!.isEmpty ? 'Name cannot be empty' : null,
+                                validator: (val) => val!.isEmpty
+                                    ? 'Name cannot be empty'
+                                    : null,
                               ),
                               const SizedBox(height: 15),
                               _buildInputField(
-                                label:  context.tr.email,
+                                label: context.tr.email,
                                 controller: _emailController,
-                                validator: (val) => !val!.contains('@') ? 'Enter a valid email' : null,
+                                validator: (val) => !val!.contains('@')
+                                    ? 'Enter a valid email'
+                                    : null,
                               ),
                               const SizedBox(height: 15),
-                              _buildInputField(
-                                label:  context.tr.phoneNumber,
-                                controller: _phoneController,
-                                keyboardType: TextInputType.phone,
-                              ),
+                              // 🔽 Phone with country code + flag on the LEFT
+                              _buildPhoneField(),
                               const SizedBox(height: 15),
                               _buildInputField(
-                                label:  context.tr.location,
+                                label: context.tr.location,
                                 controller: _locationController,
                                 suffixIcon: Icons.location_on_outlined,
                                 iconColor: Colors.grey,
                               ),
                               const SizedBox(height: 15),
                               _buildInputField(
-                                label:  context.tr.bio,
+                                label: context.tr.bio,
                                 controller: _bioController,
                                 maxLines: 3,
                               ),
-                              const SizedBox(height: 15),
-                              // Container(
-                              //   decoration: BoxDecoration(
-                              //     color: Colors.white,
-                              //     borderRadius: BorderRadius.circular(12),
-                              //     border: Border.all(color: Colors.grey[300]!),
-                              //   ),
-                              //   child: ListTile(
-                              //     title: const Text(
-                              //       'Change Password',
-                              //       style: TextStyle(fontSize: 15),
-                              //     ),
-                              //     trailing: const Icon(
-                              //       Icons.chevron_right,
-                              //       color: Colors.grey,
-                              //     ),
-                              //     onTap: () {},
-                              //   ),
-                              // ),
-                              // if (_errorMessage != null) ...[
-                              //   const SizedBox(height: 20),
-                              //   Text(
-                              //     _errorMessage!,
-                              //     style: const TextStyle(color: Colors.red),
-                              //     textAlign: TextAlign.center,
-                              //   ),
-                              // ],
                               const SizedBox(height: 30),
                               SizedBox(
                                 width: double.infinity,
                                 height: 50,
                                 child: ElevatedButton(
-                                  onPressed: _isSaving ? null : _saveProfile,
+                                  onPressed:
+                                      _isSaving ? null : _saveProfile,
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Theme.of(context).primaryColor,
+                                    backgroundColor:
+                                        Theme.of(context).primaryColor,
                                     shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(10),
+                                      borderRadius:
+                                          BorderRadius.circular(10),
                                     ),
                                   ),
                                   child: _isSaving
@@ -1161,9 +589,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                             color: Colors.white,
                                           ),
                                         )
-                                      :Text(
-                                           context.tr.saveChanges,
-                                          style: TextStyle(
+                                      : Text(
+                                          context.tr.saveChanges,
+                                          style: const TextStyle(
                                             color: Colors.white,
                                             fontSize: 16,
                                             fontWeight: FontWeight.bold,
@@ -1181,6 +609,89 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     );
   }
 
+  // ==========================================================
+  //  PHONE FIELD WITH COUNTRY CODE + FLAG (left)
+  // ==========================================================
+  Widget _buildPhoneField() {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            context.tr.phoneNumber,
+            style: const TextStyle(fontSize: 12),
+          ),
+          const SizedBox(height: 5),
+          Row(
+            children: [
+              // LEFT: flag + dial code button
+              InkWell(
+                onTap: _countries.isEmpty ? null : _openCountryPicker,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 4, vertical: 4),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        _selectedCountry?.flag ?? '🇹🇿',
+                        style: const TextStyle(fontSize: 20),
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _countryCodeController.text,
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const Icon(Icons.arrow_drop_down,
+                          color: Colors.grey, size: 22),
+                    ],
+                  ),
+                ),
+              ),
+              Container(
+                width: 1,
+                height: 22,
+                color: Colors.grey.shade300,
+                margin: const EdgeInsets.symmetric(horizontal: 6),
+              ),
+              // RIGHT: phone number input
+              Expanded(
+                child: TextFormField(
+                  controller: _phoneController,
+                  keyboardType: TextInputType.phone,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(15),
+                  ],
+                  decoration: const InputDecoration(
+                    border: InputBorder.none,
+                    isDense: true,
+                    contentPadding: EdgeInsets.zero,
+                    hintText: '712 345 678',
+                  ),
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ==========================================================
+  //  GENERIC INPUT FIELD
+  // ==========================================================
   Widget _buildInputField({
     required String label,
     required TextEditingController controller,
@@ -1195,15 +706,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       decoration: BoxDecoration(
         color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
-        // border: Border.all(color: Colors.grey[300]!),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            label,
-            style: const TextStyle( fontSize: 12),
-          ),
+          Text(label, style: const TextStyle(fontSize: 12)),
           const SizedBox(height: 5),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1219,11 +726,161 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     isDense: true,
                     contentPadding: EdgeInsets.zero,
                   ),
-                  style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.w500),
                 ),
               ),
-              if (suffixIcon != null) Icon(suffixIcon, color: iconColor, size: 20),
+              if (suffixIcon != null)
+                Icon(suffixIcon, color: iconColor, size: 20),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ==========================================================
+//  COUNTRY PICKER SHEET
+// ==========================================================
+class _CountryPickerSheet extends StatefulWidget {
+  final List<Country> countries;
+  final Country? selected;
+
+  const _CountryPickerSheet({
+    required this.countries,
+    this.selected,
+  });
+
+  @override
+  State<_CountryPickerSheet> createState() => _CountryPickerSheetState();
+}
+
+class _CountryPickerSheetState extends State<_CountryPickerSheet> {
+  final TextEditingController _search = TextEditingController();
+  List<Country> _filtered = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _filtered = widget.countries;
+    _search.addListener(_onSearch);
+  }
+
+  void _onSearch() {
+    final q = _search.text.toLowerCase().trim();
+    setState(() {
+      _filtered = q.isEmpty
+          ? widget.countries
+          : widget.countries.where((c) {
+              return c.name.toLowerCase().contains(q) ||
+                  c.iso.toLowerCase().contains(q) ||
+                  c.dial.contains(q);
+            }).toList();
+    });
+  }
+
+  @override
+  void dispose() {
+    _search.removeListener(_onSearch);
+    _search.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewInsets.bottom;
+
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.78,
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        borderRadius:
+            const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            margin: const EdgeInsets.only(top: 10, bottom: 6),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: Colors.grey[300],
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 6),
+            child: Text(
+              'Select Country Code',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ),
+          Padding(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: TextField(
+              controller: _search,
+              autofocus: false,
+              decoration: InputDecoration(
+                hintText: 'Search country or dial code…',
+                prefixIcon: const Icon(Icons.search, size: 20),
+                suffixIcon: _search.text.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear, size: 20),
+                        onPressed: () => _search.clear(),
+                      )
+                    : null,
+                filled: true,
+                fillColor:
+                    Theme.of(context).inputDecorationTheme.fillColor,
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 0),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ),
+          const Divider(height: 1),
+          Expanded(
+            child: _filtered.isEmpty
+                ? const Center(
+                    child: Text('No countries found',
+                        style: TextStyle(color: Colors.grey)),
+                  )
+                : ListView.builder(
+                    padding: EdgeInsets.only(bottom: bottomInset + 8),
+                    itemCount: _filtered.length,
+                    itemBuilder: (context, index) {
+                      final c = _filtered[index];
+                      final isSel = widget.selected?.iso == c.iso;
+                      return ListTile(
+                        leading: Text(c.flag,
+                            style: const TextStyle(fontSize: 26)),
+                        title: Text(
+                          c.name,
+                          style: TextStyle(
+                            fontWeight: isSel
+                                ? FontWeight.bold
+                                : FontWeight.w500,
+                          ),
+                        ),
+                        trailing: Text(
+                          c.dial,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: isSel
+                                ? Theme.of(context).primaryColor
+                                : Colors.grey[700],
+                          ),
+                        ),
+                        selected: isSel,
+                        onTap: () => Navigator.pop(context, c),
+                      );
+                    },
+                  ),
           ),
         ],
       ),

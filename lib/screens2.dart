@@ -15,7 +15,7 @@ class CartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final app = Provider.of<AppState>(context);
+    final app = Provider.of<AppInState>(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
       appBar: AppBar(
@@ -92,7 +92,7 @@ class CartScreen extends StatelessWidget {
     );
   }
 
-  Widget _cartItem(BuildContext context, CartItem item, AppState app) {
+  Widget _cartItem(BuildContext context, CartItem item, AppInState app) {
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
@@ -195,7 +195,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final app = Provider.of<AppState>(context);
+    final app = Provider.of<AppInState>(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
       appBar: AppBar(title: const Text('Checkout'), backgroundColor: Colors.transparent, elevation: 0, foregroundColor: Colors.black, centerTitle: true),
@@ -320,7 +320,7 @@ class _CheckoutScreenState extends State<CheckoutScreen> {
     );
   }
 
-  void _placeOrder(BuildContext context, AppState app) {
+  void _placeOrder(BuildContext context, AppInState app) {
     if (_nameCtrl.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter your name')));
       return;
@@ -494,7 +494,7 @@ class FavoritesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final app = Provider.of<AppState>(context);
+    final app = Provider.of<AppInState>(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
       appBar: AppBar(title: const Text('Favorites'), backgroundColor: Colors.transparent, elevation: 0, centerTitle: true),
@@ -761,7 +761,7 @@ bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
 
   @override
   Widget build(BuildContext context) {
-    final app = Provider.of<AppState>(context);
+    final app = Provider.of<AppInState>(context);
     final nearbyOffers = app.offersNearby(_position?.latitude, _position?.longitude);
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
@@ -841,7 +841,7 @@ bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     );
   }
 
-  Widget _profileHeader(BuildContext context, AppState app) {
+  Widget _profileHeader(BuildContext context, AppInState app) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -892,7 +892,7 @@ bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
     );
   }
 
-  Widget _offerTile(BuildContext context, Offer offer, AppState app) {
+  Widget _offerTile(BuildContext context, Offer offer, AppInState app) {
     return Container(
       margin: const EdgeInsets.only(top: 10),
       padding: const EdgeInsets.all(12),

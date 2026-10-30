@@ -142,7 +142,7 @@
 //   int? _profileId;
 
 //   late final String apiUrl;
-//   static const String _baseUrl = 'https://qopera.app';
+//   static const String _baseUrl = 'http://192.168.1.115:8000 ';
 
 //   @override
 //   void initState() {
@@ -1319,7 +1319,7 @@ class _EditProfileBusinessScreenState extends State<EditProfileBusinessScreen> {
   int? _profileId;
 
   late final String apiUrl;
-  static const String _baseUrl = 'https://qopera.app';
+  static const String _baseUrl = 'http://192.168.1.115:8000 ';
 
   @override
   void initState() {

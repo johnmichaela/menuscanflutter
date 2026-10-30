@@ -3,7 +3,7 @@
 // import 'package:shared_preferences/shared_preferences.dart';
 
 // class SubscriptionService {
-//   static const String _base = 'https://qopera.app';
+//   static const String _base = 'http://192.168.1.115:8000 ';
 
 //   Future<String?> _token() async {
 //     final p = await SharedPreferences.getInstance();
@@ -64,7 +64,7 @@ import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SubscriptionService {
-  static const String _base = 'https://qopera.app';
+  static const String _base = 'http://192.168.1.115:8000 ';
 
   Future<Map<String, String>> _headers() async {
     final prefs = await SharedPreferences.getInstance();

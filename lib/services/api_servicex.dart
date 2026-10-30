@@ -6,8 +6,8 @@ import 'package:http/http.dart' as http;
 class ApiService {
   // Android emulator uses 10.0.2.2 to reach host localhost.
   // For a physical device, replace with your computer's LAN IP, e.g. 192.168.1.116.
-  // For web/desktop use: 'https://qopera.app/api'
-  static const String baseUrl = 'https://qopera.app/api';
+  // For web/desktop use: 'http://192.168.1.115:8000 /api'
+  static const String baseUrl = 'http://192.168.1.115:8000 /api';
 
   static Future<Map<String, dynamic>> getRestaurantMenu(String slug,
       {String? tableSlug}) async {

@@ -21,14 +21,14 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final app = Provider.of<AppState>(context, listen: false);
+      final app = Provider.of<AppInState>(context, listen: false);
       app.loadEvents();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final app = Provider.of<AppState>(context);
+    final app = Provider.of<AppInState>(context);
     final isLoading = !app.eventsLoaded;
     final events = isLoading ? [] : app.events;
 
@@ -353,7 +353,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    final app = Provider.of<AppState>(context, listen: false);
+    final app = Provider.of<AppInState>(context, listen: false);
     return Container(
       padding: const EdgeInsets.all(32),
       decoration: BoxDecoration(
@@ -871,7 +871,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _onLike(BuildContext context, EventModel event) {
-    final app = Provider.of<AppState>(context, listen: false);
+    final app = Provider.of<AppInState>(context, listen: false);
     if (!app.isLoggedIn) {
       _promptLogin(context);
       return;
@@ -880,7 +880,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _onAttend(BuildContext context, EventModel event) {
-    final app = Provider.of<AppState>(context, listen: false);
+    final app = Provider.of<AppInState>(context, listen: false);
     if (!app.isLoggedIn) {
       _promptLogin(context);
       return;
@@ -889,7 +889,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _openComments(BuildContext context, EventModel event) {
-    final app = Provider.of<AppState>(context, listen: false);
+    final app = Provider.of<AppInState>(context, listen: false);
     app.loadEventComments(event);
     showModalBottomSheet(
       context: context,
@@ -902,7 +902,7 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _shareEvent(BuildContext context, EventModel event) async {
-    final app = Provider.of<AppState>(context, listen: false);
+    final app = Provider.of<AppInState>(context, listen: false);
     final message = [
       event.title,
       if (event.location.isNotEmpty) '📍 ${event.location}',
@@ -974,7 +974,7 @@ class _CommentSheetState extends State<CommentSheet> {
   }
 
   Future<void> _submit() async {
-    final app = Provider.of<AppState>(context, listen: false);
+    final app = Provider.of<AppInState>(context, listen: false);
     if (!app.isLoggedIn) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please login to comment')),
@@ -1011,7 +1011,7 @@ class _CommentSheetState extends State<CommentSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final app = Provider.of<AppState>(context);
+    final app = Provider.of<AppInState>(context);
     final event = app.events.firstWhere(
       (e) => e.id == widget.eventId,
       orElse: () => EventModel(
